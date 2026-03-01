@@ -33,6 +33,12 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+db.sqlite3
+
 # Temporary files
 tmp/
 temp/

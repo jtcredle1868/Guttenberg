@@ -9,7 +9,7 @@ import { PublishingWorkflow } from '../components/ui/PublishingWorkflow';
 import { ChannelReadiness } from '../components/ui/ChannelReadiness';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
-import { Title } from '../api/types';
+import { Title, Format } from '../api/types';
 import { MOCK_TITLES } from '../mockData';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -20,7 +20,11 @@ import {
   CloudArrowUpIcon, SparklesIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import { format, subDays } from 'date-fns';
+import { format as fmtDate, subDays } from 'date-fns';
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: <BookOpenIcon className="w-4 h-4" /> },
@@ -41,7 +45,7 @@ const PREFLIGHT_CHECKS = [
   { item: 'No tracked changes', status: 'pass' as const, message: 'Clean document' },
   { item: 'Spelling language set', status: 'pass' as const, message: 'English (US)' },
   { item: 'No hidden text', status: 'pass' as const, message: 'No hidden content' },
-  { item: 'Special characters', status: 'warning' as const, message: '4 unusual characters found — review recommended' },
+  { item: 'Special characters', status: 'warning' as const, message: '4 unusual characters found -- review recommended' },
   { item: 'Font embedding', status: 'pass' as const, message: 'Standard fonts used' },
   { item: 'Paragraph styles consistent', status: 'pass' as const, message: 'Body, heading styles applied' },
   { item: 'Scene breaks detected', status: 'pass' as const, message: '47 scene breaks marked' },
@@ -50,22 +54,82 @@ const PREFLIGHT_CHECKS = [
   { item: 'Table of contents', status: 'pass' as const, message: 'TOC present and linked' },
 ];
 
-const TRIM_SIZES = ['6" × 9"', '5.5" × 8.5"', '5" × 8"', '5.25" × 8"', '8" × 10"', '8.5" × 11"'];
+const TRIM_SIZES = ['6" x 9"', '5.5" x 8.5"', '5" x 8"', '5.25" x 8"', '8" x 10"', '8.5" x 11"'];
 const TEMPLATES = ['Classic Serif', 'Modern Clean', 'Academic', 'Literary', 'Commercial Fiction', 'Children\'s', 'Technical', 'Poetry'];
 
 const CHANNELS = [
-  { id: 'amazon-kdp', name: 'Amazon KDP', emoji: '📦', royaltyRate: 0.70, desc: 'Largest ebook & POD marketplace' },
-  { id: 'ingram-spark', name: 'IngramSpark', emoji: '🌍', royaltyRate: 0.55, desc: 'Global print distribution network' },
-  { id: 'apple-books', name: 'Apple Books', emoji: '🍎', royaltyRate: 0.70, desc: 'Premium ebook platform' },
-  { id: 'kobo', name: 'Kobo', emoji: '📖', royaltyRate: 0.70, desc: 'International ebook retailer' },
-  { id: 'barnes-noble', name: 'Barnes & Noble', emoji: '🏛️', royaltyRate: 0.65, desc: 'US print & ebook market' },
-  { id: 'author-store', name: 'Author Store', emoji: '🛒', royaltyRate: 0.95, desc: 'Direct sales, highest royalties' },
+  { id: 'amazon-kdp', name: 'Amazon KDP', royaltyRate: 0.70, desc: 'Largest ebook & POD marketplace' },
+  { id: 'ingram-spark', name: 'IngramSpark', royaltyRate: 0.55, desc: 'Global print distribution network' },
+  { id: 'apple-books', name: 'Apple Books', royaltyRate: 0.70, desc: 'Premium ebook platform' },
+  { id: 'kobo', name: 'Kobo', royaltyRate: 0.70, desc: 'International ebook retailer' },
+  { id: 'barnes-noble', name: 'Barnes & Noble', royaltyRate: 0.65, desc: 'US print & ebook market' },
+  { id: 'author-store', name: 'Author Store', royaltyRate: 0.95, desc: 'Direct sales, highest royalties' },
 ];
 
 const mockEarnings = Array.from({ length: 60 }, (_, i) => ({
-  date: format(subDays(new Date(), 59 - i), 'MMM d'),
+  date: fmtDate(subDays(new Date(), 59 - i), 'MMM d'),
   earnings: Math.round((Math.random() * 300 + 50) * 100) / 100,
 }));
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a full Title object from a TitleListItem for the detail view.
+ * In production the API would return the full Title; here we synthesise
+ * the missing fields so the UI can render without errors.
+ */
+const buildMockTitle = (item: (typeof MOCK_TITLES)[number]): Title => {
+  const mockFormats: Format[] = item.format_count > 0
+    ? Array.from({ length: item.format_count }, (_, i): Format => ({
+        id: `fmt-${item.id}-${i}`,
+        title: item.id,
+        format_type: i === 0 ? 'ebook' : i === 1 ? 'paperback' : 'hardcover',
+        isbn: i === 0 ? undefined : `978-0-${Math.floor(Math.random() * 9000 + 1000)}-${Math.floor(Math.random() * 9000 + 1000)}-${Math.floor(Math.random() * 9) + 1}`,
+        trim_size: i > 0 ? '6" x 9"' : undefined,
+        page_count: i > 0 ? Math.round(item.word_count / 250) : undefined,
+        list_price_usd: i === 0 ? 9.99 : i === 1 ? 14.99 : 24.99,
+        channel_pricing: {},
+        drm_enabled: i === 0,
+        status: item.status === 'live' ? 'live' : item.status === 'ready' ? 'ready' : 'draft',
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      }))
+    : [];
+
+  return {
+    id: item.id,
+    user: 1,
+    title: item.title,
+    subtitle: item.subtitle,
+    series_name: '',
+    primary_author: item.primary_author,
+    contributors: [],
+    synopsis_short: 'A captivating story that explores the boundaries of human experience and the power of discovery.',
+    synopsis_long: '',
+    bisac_codes: ['FIC000000'],
+    keywords: ['fiction', item.genre.toLowerCase()],
+    language: 'en',
+    content_advisories: [],
+    publication_date: item.publication_date ?? null,
+    edition: '1st',
+    publishing_readiness_score: item.publishing_readiness_score,
+    refinery_score: Math.min(100, item.publishing_readiness_score + 5),
+    metadata_completeness_score: Math.min(100, item.publishing_readiness_score + 3),
+    preflight_score: Math.min(100, item.publishing_readiness_score + 8),
+    status: item.status,
+    word_count: item.word_count,
+    genre: item.genre,
+    created_at: item.created_at,
+    updated_at: item.updated_at,
+    formats: mockFormats,
+  };
+};
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export const TitleDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -73,7 +137,7 @@ export const TitleDetailPage = () => {
   const [title, setTitle] = useState<Title | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [metaSubTab, setMetaSubTab] = useState('basic');
-  const [selectedTrimSize, setSelectedTrimSize] = useState('6" × 9"');
+  const [selectedTrimSize, setSelectedTrimSize] = useState('6" x 9"');
   const [selectedTemplate, setSelectedTemplate] = useState('Classic Serif');
   const [formatType, setFormatType] = useState('both');
   const [channelPrices, setChannelPrices] = useState<Record<string, string>>({});
@@ -82,24 +146,29 @@ export const TitleDetailPage = () => {
 
   useEffect(() => {
     const found = MOCK_TITLES.find(t => t.id === id);
-    setTitle(found || MOCK_TITLES[0]);
+    const item = found || MOCK_TITLES[0];
+    setTitle(buildMockTitle(item));
     const prices: Record<string, string> = {};
     CHANNELS.forEach(ch => { prices[ch.id] = '9.99'; });
     setChannelPrices(prices);
   }, [id]);
 
-  if (!title) return <Layout title="Loading…"><div className="animate-pulse h-96 bg-gray-100 rounded-2xl" /></Layout>;
+  if (!title) return <Layout title="Loading..."><div className="animate-pulse h-96 bg-gray-100 rounded-2xl" /></Layout>;
+
+  const formats = title.formats ?? [];
+  const pageCount = formats.find(f => f.page_count)?.page_count;
+  const liveChannelCount = title.status === 'live' ? Math.max(1, formats.filter(f => f.status === 'live').length) : 0;
 
   const completedSteps = [
-    ...(title.formats.length > 0 ? ['manuscript'] : []),
-    ...(title.shortSynopsis ? ['metadata'] : []),
-    ...(title.formats.some(f => f.status === 'complete') ? ['formatting'] : []),
-    ...(title.coverUrl ? ['cover'] : []),
-    ...(title.channels.some(c => c.status === 'live') ? ['distribution'] : []),
+    ...(formats.length > 0 ? ['manuscript'] : []),
+    ...(title.synopsis_short ? ['metadata'] : []),
+    ...(formats.some(f => f.status === 'ready' || f.status === 'live') ? ['formatting'] : []),
+    ...(title.status === 'live' ? ['cover'] : []),
+    ...(title.status === 'live' ? ['distribution'] : []),
   ];
 
   const handleFormatNow = () => {
-    toast.success('Formatting job queued! This usually takes 2–3 minutes.');
+    toast.success('Formatting job queued! This usually takes 2-3 minutes.');
   };
 
   const handleChannelSubmit = (channelId: string) => {
@@ -110,19 +179,18 @@ export const TitleDetailPage = () => {
     }, 1500);
   };
 
-  const getChannelStatus = (channelId: string) => {
-    const ch = title.channels.find(c => c.name === channelId);
-    return ch?.status || 'not-submitted';
+  const getChannelStatus = (_channelId: string): string => {
+    if (title.status === 'live') return 'live';
+    return 'not-submitted';
   };
 
   return (
     <Layout title={title.title} breadcrumbs={[{ label: 'My Titles', href: '/titles' }, { label: title.title }]}>
       <TabPanel tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab}>
 
-        {/* ── OVERVIEW ── */}
+        {/* -- OVERVIEW -- */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Header */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <div className="flex gap-6 items-start">
                 <div className="w-28 h-40 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center shadow-lg">
@@ -133,32 +201,31 @@ export const TitleDetailPage = () => {
                     <div className="min-w-0">
                       <h2 className="text-2xl font-bold text-gray-900">{title.title}</h2>
                       {title.subtitle && <p className="text-gray-500 text-sm">{title.subtitle}</p>}
-                      <p className="text-sm text-gray-400 mt-1">by {title.authorName}</p>
+                      <p className="text-sm text-gray-400 mt-1">by {title.primary_author}</p>
                     </div>
                     <StatusBadge status={title.status} />
                   </div>
                   <div className="grid grid-cols-3 gap-4 mt-4">
                     <div className="text-center p-3 bg-gray-50 rounded-xl">
                       <p className="text-xs text-gray-500">Word Count</p>
-                      <p className="font-bold text-gray-900">{(title.wordCount || 0).toLocaleString()}</p>
+                      <p className="font-bold text-gray-900">{(title.word_count || 0).toLocaleString()}</p>
                     </div>
                     <div className="text-center p-3 bg-gray-50 rounded-xl">
                       <p className="text-xs text-gray-500">Pages</p>
-                      <p className="font-bold text-gray-900">{title.pageCount || '—'}</p>
+                      <p className="font-bold text-gray-900">{pageCount || '--'}</p>
                     </div>
                     <div className="text-center p-3 bg-gray-50 rounded-xl">
                       <p className="text-xs text-gray-500">Channels</p>
-                      <p className="font-bold text-gray-900">{title.channels.filter(c => c.status === 'live').length} live</p>
+                      <p className="font-bold text-gray-900">{liveChannelCount} live</p>
                     </div>
                   </div>
                 </div>
                 <div className="flex-shrink-0">
-                  <ReadinessScore score={title.readinessScore} size="lg" />
+                  <ReadinessScore score={title.publishing_readiness_score} size="lg" />
                 </div>
               </div>
             </div>
 
-            {/* Workflow stepper */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-4">Publishing Workflow</h3>
               <PublishingWorkflow completed={completedSteps} current={completedSteps.length < 5 ? TABS[completedSteps.length + 1]?.id : undefined} />
@@ -166,7 +233,7 @@ export const TitleDetailPage = () => {
           </div>
         )}
 
-        {/* ── MANUSCRIPT ── */}
+        {/* -- MANUSCRIPT -- */}
         {activeTab === 'manuscript' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
@@ -179,7 +246,7 @@ export const TitleDetailPage = () => {
                   accept={{ 'application/msword': ['.doc'], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'], 'text/plain': ['.txt'], 'application/pdf': ['.pdf'], 'application/rtf': ['.rtf'] }}
                   maxSize={50 * 1024 * 1024}
                   label="Drop your manuscript here or click to browse"
-                  hint="Accepts .docx, .doc, .rtf, .odt, .txt, .pdf — max 50MB"
+                  hint="Accepts .docx, .doc, .rtf, .odt, .txt, .pdf -- max 50MB"
                 />
               </div>
 
@@ -188,7 +255,7 @@ export const TitleDetailPage = () => {
                 <div className="flex items-center gap-3 mb-4 p-3 bg-green-50 border border-green-200 rounded-xl">
                   <CheckCircleIcon className="w-5 h-5 text-green-600 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-green-800">13 Passed · 2 Warnings · 0 Errors</p>
+                    <p className="text-sm font-semibold text-green-800">13 Passed - 2 Warnings - 0 Errors</p>
                     <p className="text-xs text-green-600">Manuscript is ready for formatting</p>
                   </div>
                 </div>
@@ -208,7 +275,6 @@ export const TitleDetailPage = () => {
               </div>
             </div>
 
-            {/* Version history */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <h3 className="text-base font-semibold text-gray-900 mb-4">Version History</h3>
               <div className="space-y-4">
@@ -232,12 +298,11 @@ export const TitleDetailPage = () => {
           </div>
         )}
 
-        {/* ── METADATA ── */}
+        {/* -- METADATA -- */}
         {activeTab === 'metadata' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                {/* Sub-tabs */}
                 <div className="flex gap-1 mb-6 overflow-x-auto">
                   {['basic', 'contributors', 'classification', 'description', 'advanced'].map(sub => (
                     <button key={sub} onClick={() => setMetaSubTab(sub)} className={clsx('px-3 py-1.5 text-xs font-medium rounded-lg capitalize whitespace-nowrap', metaSubTab === sub ? 'bg-primary-100 text-primary-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100')}>
@@ -261,7 +326,7 @@ export const TitleDetailPage = () => {
                     <div className="grid grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Language</label>
-                        <select defaultValue="en" className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500 bg-white">
+                        <select defaultValue={title.language || 'en'} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500 bg-white">
                           <option value="en">English</option>
                           <option value="es">Spanish</option>
                           <option value="fr">French</option>
@@ -269,11 +334,11 @@ export const TitleDetailPage = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Publication Date</label>
-                        <input type="date" defaultValue={title.publicationDate} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+                        <input type="date" defaultValue={title.publication_date || ''} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Page Count</label>
-                        <input type="number" defaultValue={title.pageCount} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+                        <input type="number" defaultValue={pageCount || ''} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" />
                       </div>
                     </div>
                     <button onClick={() => toast.success('Metadata saved!')} className="px-6 py-2.5 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700 transition-colors">Save Changes</button>
@@ -283,7 +348,7 @@ export const TitleDetailPage = () => {
                 {metaSubTab === 'contributors' && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Author Name</label><input defaultValue={title.authorName} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" /></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Author Name</label><input defaultValue={title.primary_author} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" /></div>
                       <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Pen Name</label><input placeholder="Optional pen name" className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" /></div>
                     </div>
                     <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Author Bio</label><textarea rows={4} placeholder="Write a brief author bio for reader-facing descriptions..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500 resize-none" /></div>
@@ -302,16 +367,16 @@ export const TitleDetailPage = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">BISAC Codes</label>
                       <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-xl min-h-[48px]">
-                        {(title.bisacCodes || ['BUS000000']).map(code => (
-                          <span key={code} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-100 text-primary-700 text-xs rounded-lg font-mono">{code} <button className="text-primary-400 hover:text-primary-600">×</button></span>
+                        {(title.bisac_codes || ['BUS000000']).map((code: string) => (
+                          <span key={code} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-100 text-primary-700 text-xs rounded-lg font-mono">{code} <button className="text-primary-400 hover:text-primary-600">x</button></span>
                         ))}
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">Keywords</label>
                       <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-xl min-h-[48px]">
-                        {(title.keywords || ['entrepreneurship', 'tech startup', 'silicon valley']).map(kw => (
-                          <span key={kw} className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs rounded-lg">{kw} <button className="text-gray-400">×</button></span>
+                        {(title.keywords || ['entrepreneurship', 'tech startup', 'silicon valley']).map((kw: string) => (
+                          <span key={kw} className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs rounded-lg">{kw} <button className="text-gray-400">x</button></span>
                         ))}
                       </div>
                     </div>
@@ -324,16 +389,16 @@ export const TitleDetailPage = () => {
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="block text-sm font-medium text-gray-700">Short Synopsis</label>
-                        <button onClick={() => toast.info('AI is generating your synopsis…')} className="flex items-center gap-1 text-xs text-accent-600 font-medium hover:text-accent-700">
+                        <button onClick={() => toast.success('AI is generating your synopsis...')} className="flex items-center gap-1 text-xs text-accent-600 font-medium hover:text-accent-700">
                           <SparklesIcon className="w-3.5 h-3.5" /> Generate with AI
                         </button>
                       </div>
-                      <textarea rows={3} defaultValue={title.shortSynopsis} maxLength={500} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500 resize-none" />
+                      <textarea rows={3} defaultValue={title.synopsis_short} maxLength={500} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500 resize-none" />
                       <p className="text-xs text-gray-400 text-right mt-1">0 / 500</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">Long Description</label>
-                      <textarea rows={8} placeholder="Full marketing description for retailer product pages..." maxLength={4000} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500 resize-none" />
+                      <textarea rows={8} defaultValue={title.synopsis_long} placeholder="Full marketing description for retailer product pages..." maxLength={4000} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500 resize-none" />
                       <p className="text-xs text-gray-400 text-right mt-1">0 / 4000</p>
                     </div>
                     <button onClick={() => toast.success('Description saved!')} className="px-6 py-2.5 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700">Save Changes</button>
@@ -343,12 +408,12 @@ export const TitleDetailPage = () => {
                 {metaSubTab === 'advanced' && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Series Name</label><input defaultValue={title.seriesName || ''} placeholder="Optional" className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" /></div>
-                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Series Number</label><input type="number" defaultValue={title.seriesNumber || ''} placeholder="e.g. 1" className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" /></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Series Name</label><input defaultValue={title.series_name || ''} placeholder="Optional" className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" /></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Series Number</label><input type="number" defaultValue={title.series_number || ''} placeholder="e.g. 1" className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" /></div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Publisher / Imprint</label><input defaultValue={title.publisherName || ''} placeholder="Your publisher name" className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" /></div>
-                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Copyright Year</label><input type="number" defaultValue={title.copyrightYear || new Date().getFullYear()} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" /></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Publisher / Imprint</label><input defaultValue={title.imprint || ''} placeholder="Your publisher name" className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" /></div>
+                      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">Edition</label><input defaultValue={title.edition || '1st'} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500" /></div>
                     </div>
                     <button onClick={() => toast.success('Advanced settings saved!')} className="px-6 py-2.5 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700">Save Changes</button>
                   </div>
@@ -362,30 +427,30 @@ export const TitleDetailPage = () => {
               {[
                 { channel: 'amazon-kdp', displayName: 'Amazon KDP', requirements: [
                   { key: 'title', label: 'Title', met: !!title.title },
-                  { key: 'author', label: 'Author name', met: !!title.authorName },
-                  { key: 'desc', label: 'Description', met: !!(title.shortSynopsis || title.longDescription) },
-                  { key: 'bisac', label: 'BISAC codes', met: !!(title.bisacCodes?.length) },
-                  { key: 'cover', label: 'Cover image', met: !!title.coverUrl, optional: true },
+                  { key: 'author', label: 'Author name', met: !!title.primary_author },
+                  { key: 'desc', label: 'Description', met: !!(title.synopsis_short || title.synopsis_long) },
+                  { key: 'bisac', label: 'BISAC codes', met: !!(title.bisac_codes?.length) },
+                  { key: 'cover', label: 'Cover image', met: title.status === 'live', optional: true },
                 ]},
                 { channel: 'ingram-spark', displayName: 'IngramSpark', requirements: [
                   { key: 'title', label: 'Title', met: !!title.title },
-                  { key: 'author', label: 'Author', met: !!title.authorName },
-                  { key: 'pub-date', label: 'Publication date', met: !!title.publicationDate },
-                  { key: 'cover', label: 'Cover (hi-res)', met: !!title.coverUrl },
+                  { key: 'author', label: 'Author', met: !!title.primary_author },
+                  { key: 'pub-date', label: 'Publication date', met: !!title.publication_date },
+                  { key: 'cover', label: 'Cover (hi-res)', met: title.status === 'live' },
                   { key: 'isbn', label: 'ISBN', met: false, optional: true },
                 ]},
                 { channel: 'apple-books', displayName: 'Apple Books', requirements: [
                   { key: 'title', label: 'Title', met: !!title.title },
-                  { key: 'author', label: 'Author', met: !!title.authorName },
-                  { key: 'desc', label: 'Description', met: !!(title.shortSynopsis) },
-                  { key: 'cover', label: 'Cover', met: !!title.coverUrl },
+                  { key: 'author', label: 'Author', met: !!title.primary_author },
+                  { key: 'desc', label: 'Description', met: !!title.synopsis_short },
+                  { key: 'cover', label: 'Cover', met: title.status === 'live' },
                 ]},
               ].map(ch => <ChannelReadiness key={ch.channel} {...ch} />)}
             </div>
           </div>
         )}
 
-        {/* ── FORMATTING ── */}
+        {/* -- FORMATTING -- */}
         {activeTab === 'formatting' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
@@ -394,7 +459,7 @@ export const TitleDetailPage = () => {
                 <div className="grid grid-cols-3 gap-3 mb-6">
                   {['print', 'ebook', 'both'].map(ft => (
                     <button key={ft} onClick={() => setFormatType(ft)} className={clsx('py-3 rounded-xl text-sm font-medium border-2 transition-colors capitalize', formatType === ft ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-600 hover:border-gray-300')}>
-                      {ft === 'print' ? '📚 Print' : ft === 'ebook' ? '📱 E-book' : '📚📱 Both'}
+                      {ft === 'print' ? 'Print' : ft === 'ebook' ? 'E-book' : 'Print + E-book'}
                     </button>
                   ))}
                 </div>
@@ -413,7 +478,7 @@ export const TitleDetailPage = () => {
                   {TEMPLATES.map(tmpl => (
                     <button key={tmpl} onClick={() => setSelectedTemplate(tmpl)} className={clsx('p-3 rounded-xl border-2 text-xs font-medium transition-colors text-center', selectedTemplate === tmpl ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-600 hover:border-gray-300')}>
                       <div className="w-full h-12 bg-gradient-to-b from-gray-100 to-gray-200 rounded mb-2 flex items-center justify-center text-gray-400 text-lg">
-                        {tmpl === 'Classic Serif' ? 'A' : tmpl === 'Modern Clean' ? 'Aa' : tmpl === 'Academic' ? '§' : '¶'}
+                        {tmpl === 'Classic Serif' ? 'A' : tmpl === 'Modern Clean' ? 'Aa' : tmpl === 'Academic' ? 'S' : 'P'}
                       </div>
                       {tmpl}
                     </button>
@@ -421,12 +486,11 @@ export const TitleDetailPage = () => {
                 </div>
 
                 <button onClick={handleFormatNow} className="w-full py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-sm">
-                  Format Now →
+                  Format Now
                 </button>
               </div>
             </div>
 
-            {/* Format history */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <h3 className="text-base font-semibold text-gray-900 mb-4">Format Jobs</h3>
               <div className="space-y-3">
@@ -438,9 +502,9 @@ export const TitleDetailPage = () => {
                   <div key={job.id} className="border border-gray-100 rounded-xl p-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium text-gray-800">{job.type}</span>
-                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">✓ Complete</span>
+                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Complete</span>
                     </div>
-                    <p className="text-xs text-gray-500">{job.template} · {job.date}</p>
+                    <p className="text-xs text-gray-500">{job.template} - {job.date}</p>
                     <div className="flex gap-2 mt-2">
                       <button className="text-xs text-primary-600 hover:text-primary-700">Download PDF</button>
                       <button className="text-xs text-primary-600 hover:text-primary-700">Download EPUB</button>
@@ -452,7 +516,7 @@ export const TitleDetailPage = () => {
           </div>
         )}
 
-        {/* ── COVER ── */}
+        {/* -- COVER -- */}
         {activeTab === 'cover' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
@@ -463,11 +527,11 @@ export const TitleDetailPage = () => {
                   accept={{ 'image/jpeg': ['.jpg', '.jpeg'], 'image/png': ['.png'], 'image/tiff': ['.tiff', '.tif'] }}
                   maxSize={30 * 1024 * 1024}
                   label="Drop your cover image here"
-                  hint="Minimum 1600×2400px · JPEG, PNG, TIFF · Max 30MB"
+                  hint="Minimum 1600x2400px - JPEG, PNG, TIFF - Max 30MB"
                 />
                 <div className="mt-4 flex gap-3">
                   <button onClick={() => setDesignerModalOpen(true)} className="flex-1 py-3 bg-gradient-to-r from-accent-600 to-accent-700 text-white font-medium rounded-xl hover:from-accent-700 hover:to-accent-800 transition-all">
-                    ✨ Open Cover Designer
+                    Open Cover Designer
                   </button>
                 </div>
                 <div className="mt-4 flex items-center gap-3">
@@ -480,9 +544,9 @@ export const TitleDetailPage = () => {
                 <h3 className="text-base font-semibold text-gray-900 mb-3">Cover Validation</h3>
                 <div className="space-y-2">
                   {[
-                    { item: 'Resolution (min 1600×2400)', status: 'pass', msg: '2560×3840px ✓' },
+                    { item: 'Resolution (min 1600x2400)', status: 'pass', msg: '2560x3840px' },
                     { item: 'File size', status: 'pass', msg: '4.2 MB (within limit)' },
-                    { item: 'Color profile', status: 'warning', msg: 'RGB detected — CMYK recommended for print' },
+                    { item: 'Color profile', status: 'warning', msg: 'RGB detected -- CMYK recommended for print' },
                     { item: 'Bleed margins', status: 'pass', msg: '0.125" bleed present' },
                     { item: 'Text safe zones', status: 'pass', msg: 'All text within safe margins' },
                   ].map((c, i) => (
@@ -506,30 +570,29 @@ export const TitleDetailPage = () => {
           </div>
         )}
 
-        {/* ── DISTRIBUTION ── */}
+        {/* -- DISTRIBUTION -- */}
         {activeTab === 'distribution' && (
           <div className="space-y-4">
-            {/* Royalty price hint */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-              💡 Set your list price for each channel. Your royalties are calculated automatically based on each platform's rate.
+              Set your list price for each channel. Your royalties are calculated automatically based on each platform's rate.
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {CHANNELS.map(ch => {
                 const status = getChannelStatus(ch.id);
-                const price = parseFloat(channelPrices[ch.id] || '9.99');
-                const royalty = (price * ch.royaltyRate).toFixed(2);
+                const channelPrice = parseFloat(channelPrices[ch.id] || '9.99');
+                const royalty = (channelPrice * ch.royaltyRate).toFixed(2);
                 return (
                   <div key={ch.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="font-semibold text-gray-900 text-sm">{ch.emoji} {ch.name}</p>
+                        <p className="font-semibold text-gray-900 text-sm">{ch.name}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{ch.desc}</p>
                       </div>
                       <span className={clsx('text-xs px-2 py-1 rounded-full font-medium',
                         status === 'live' ? 'bg-green-100 text-green-700' :
                         status === 'pending' ? 'bg-amber-100 text-amber-700' :
                         'bg-gray-100 text-gray-500')}>
-                        {status === 'live' ? '🟢 Live' : status === 'pending' ? '🟡 Pending' : '○ Not Listed'}
+                        {status === 'live' ? 'Live' : status === 'pending' ? 'Pending' : 'Not Listed'}
                       </span>
                     </div>
                     <div className="mb-3">
@@ -556,10 +619,10 @@ export const TitleDetailPage = () => {
                           : 'bg-primary-600 text-white hover:bg-primary-700'
                       )}
                     >
-                      {isSubmitting === ch.id ? 'Submitting…' : status === 'live' ? 'Withdraw' : 'Submit for Distribution'}
+                      {isSubmitting === ch.id ? 'Submitting...' : status === 'live' ? 'Withdraw' : 'Submit for Distribution'}
                     </button>
                     {ch.id === 'amazon-kdp' && (
-                      <p className="text-xs text-amber-600 mt-2 text-center">⚠️ KDP Select requires 90-day exclusivity</p>
+                      <p className="text-xs text-amber-600 mt-2 text-center">KDP Select requires 90-day exclusivity</p>
                     )}
                   </div>
                 );
@@ -568,7 +631,7 @@ export const TitleDetailPage = () => {
           </div>
         )}
 
-        {/* ── FINANCE ── */}
+        {/* -- FINANCE -- */}
         {activeTab === 'finance' && (
           <div className="space-y-6">
             <div className="grid grid-cols-3 gap-4">
@@ -591,7 +654,7 @@ export const TitleDetailPage = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={9} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} />
-                  <Tooltip formatter={(v: number | undefined) => [`$${(v || 0).toFixed(2)}`, 'Earnings']} contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }} />
+                  <Tooltip formatter={(v: any) => [`$${(Number(v) || 0).toFixed(2)}`, 'Earnings']} contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }} />
                   <Line type="monotone" dataKey="earnings" stroke="#6366f1" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -600,15 +663,14 @@ export const TitleDetailPage = () => {
         )}
       </TabPanel>
 
-      {/* Cover Designer Modal */}
       <Modal isOpen={designerModalOpen} onClose={() => setDesignerModalOpen(false)} title="Cover Designer">
         <div className="text-center py-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center mx-auto mb-4">
             <PaintBrushIcon className="w-8 h-8 text-white" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Integrated Cover Designer</h3>
-          <p className="text-sm text-gray-500 mb-6">Our AI-powered cover designer with 500+ professionally designed templates is launching Q3 2024. Choose from genre-specific layouts, customize typography, and generate unique artwork.</p>
-          <button onClick={() => { setDesignerModalOpen(false); toast.info('You\'ll be notified when Cover Designer launches!'); }} className="px-6 py-2.5 bg-accent-600 text-white font-medium rounded-xl hover:bg-accent-700">
+          <p className="text-sm text-gray-500 mb-6">Our AI-powered cover designer with 500+ professionally designed templates is launching soon. Choose from genre-specific layouts, customize typography, and generate unique artwork.</p>
+          <button onClick={() => { setDesignerModalOpen(false); toast.success('You will be notified when Cover Designer launches!'); }} className="px-6 py-2.5 bg-accent-600 text-white font-medium rounded-xl hover:bg-accent-700">
             Notify Me at Launch
           </button>
         </div>

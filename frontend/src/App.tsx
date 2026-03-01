@@ -18,11 +18,14 @@ import { SettingsPage } from './pages/SettingsPage';
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm text-gray-500">Loading Guttenberg...</p>
+      </div>
     </div>
   );
-  const hasToken = !!localStorage.getItem('auth_token');
+  const hasToken = !!localStorage.getItem('access_token');
   if (!isAuthenticated && !hasToken) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };

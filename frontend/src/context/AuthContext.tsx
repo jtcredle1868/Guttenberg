@@ -1,41 +1,46 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Author } from '../api/types';
-import { login as apiLogin, getMe } from '../api/auth';
+import { User } from '../api/types';
+import { login as apiLogin, getProfile, logout as apiLogout } from '../api/auth';
 
 interface AuthContextType {
-  user: Author | null;
+  user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<Author | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('access_token');
     if (token) {
-      getMe()
-        .then((res) => setUser(res.data))
-        .catch(() => localStorage.removeItem('auth_token'))
+      getProfile()
+        .then((data) => setUser(data))
+        .catch(() => {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+        })
         .finally(() => setIsLoading(false));
     } else {
       setIsLoading(false);
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const res = await apiLogin(email, password);
-    localStorage.setItem('auth_token', res.data.token);
-    setUser(res.data.user);
+  const login = async (username: string, password: string) => {
+    const tokens = await apiLogin(username, password);
+    localStorage.setItem('access_token', tokens.access);
+    localStorage.setItem('refresh_token', tokens.refresh);
+    const profile = await getProfile();
+    setUser(profile);
   };
 
   const logout = () => {
-    localStorage.removeItem('auth_token');
+    apiLogout();
     setUser(null);
   };
 

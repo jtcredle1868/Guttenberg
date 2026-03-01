@@ -3,8 +3,9 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import {
   HomeIcon, BookOpenIcon, PlusCircleIcon, ChartBarIcon,
-  CurrencyDollarIcon, TruckIcon, MegaphoneIcon, BuildingLibraryIcon,
-  UsersIcon, Cog6ToothIcon, ChevronLeftIcon, ChevronRightIcon,
+  CurrencyDollarIcon, MegaphoneIcon, BuildingLibraryIcon,
+  Cog6ToothIcon, ChevronLeftIcon, ChevronRightIcon,
+  SparklesIcon, ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
@@ -19,33 +20,20 @@ const navGroups = [
     ],
   },
   {
-    label: 'Distribution & Finance',
+    label: 'Insights',
     items: [
       { to: '/analytics', icon: ChartBarIcon, label: 'Analytics' },
       { to: '/finance', icon: CurrencyDollarIcon, label: 'Finance' },
-      { to: '/catalog', icon: TruckIcon, label: 'Distribution' },
     ],
   },
   {
-    label: 'Marketing',
+    label: 'Growth',
     items: [
-      { to: '/marketing', icon: MegaphoneIcon, label: 'Marketing Hub' },
-    ],
-  },
-  {
-    label: 'Enterprise',
-    items: [
+      { to: '/marketing', icon: MegaphoneIcon, label: 'Marketing' },
       { to: '/catalog', icon: BuildingLibraryIcon, label: 'Catalog' },
-      { to: '/settings', icon: UsersIcon, label: 'Team' },
     ],
   },
 ];
-
-const tierColors: Record<string, string> = {
-  indie: 'bg-gray-700 text-gray-200',
-  pro: 'bg-primary-600 text-white',
-  publisher: 'bg-accent-600 text-white',
-};
 
 export const Sidebar = () => {
   const { user, logout } = useAuth();
@@ -56,6 +44,9 @@ export const Sidebar = () => {
     logout();
     navigate('/login');
   };
+
+  const displayName = user ? `${user.first_name} ${user.last_name}`.trim() || user.username : 'User';
+  const initial = displayName.charAt(0).toUpperCase();
 
   return (
     <aside className={clsx(
@@ -70,7 +61,7 @@ export const Sidebar = () => {
         {!sidebarCollapsed && (
           <div className="min-w-0">
             <p className="font-bold text-white text-sm leading-tight">Guttenberg</p>
-            <p className="text-xs text-gray-400 leading-tight">Self-Publishing</p>
+            <p className="text-[10px] text-gray-400 leading-tight">Master Prose Platform</p>
           </div>
         )}
         <button
@@ -94,9 +85,9 @@ export const Sidebar = () => {
                   <NavLink
                     to={item.to}
                     className={({ isActive }) => clsx(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors group',
+                      'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group',
                       isActive
-                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/30'
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/30'
                         : 'text-gray-300 hover:bg-gray-700/60 hover:text-white'
                     )}
                     title={sidebarCollapsed ? item.label : undefined}
@@ -111,13 +102,24 @@ export const Sidebar = () => {
         ))}
       </nav>
 
+      {/* AI Badge */}
+      {!sidebarCollapsed && (
+        <div className="mx-3 mb-3 p-3 rounded-xl bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border border-indigo-500/30">
+          <div className="flex items-center gap-2 mb-1">
+            <SparklesIcon className="w-4 h-4 text-indigo-400" />
+            <span className="text-xs font-semibold text-indigo-300">Powered by Claude</span>
+          </div>
+          <p className="text-[10px] text-gray-400">AI synopsis, keywords & more</p>
+        </div>
+      )}
+
       {/* Settings */}
       <div className="px-2 pb-2">
         <NavLink
           to="/settings"
           className={({ isActive }) => clsx(
             'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
-            isActive ? 'bg-primary-600 text-white' : 'text-gray-300 hover:bg-gray-700/60 hover:text-white'
+            isActive ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700/60 hover:text-white'
           )}
           title={sidebarCollapsed ? 'Settings' : undefined}
         >
@@ -130,20 +132,22 @@ export const Sidebar = () => {
       <div className="border-t border-gray-700/50 p-3">
         {user ? (
           <div className={clsx('flex items-center gap-3', sidebarCollapsed && 'justify-center')}>
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-xs font-bold text-white">
-              {user.name?.charAt(0).toUpperCase() || 'U'}
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-xs font-bold text-white">
+              {initial}
             </div>
             {!sidebarCollapsed && (
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-white truncate">{user.name}</p>
-                <span className={clsx('inline-block text-xs px-1.5 py-0.5 rounded-full font-medium', tierColors[user.subscriptionTier] || tierColors.indie)}>
-                  {user.subscriptionTier}
-                </span>
+                <p className="text-sm font-medium text-white truncate">{displayName}</p>
+                <p className="text-xs text-gray-400 truncate">{user.email}</p>
               </div>
             )}
             {!sidebarCollapsed && (
-              <button onClick={handleLogout} className="text-gray-400 hover:text-white text-xs">
-                Out
+              <button
+                onClick={handleLogout}
+                className="p-1 text-gray-400 hover:text-white rounded transition-colors"
+                title="Sign out"
+              >
+                <ArrowRightOnRectangleIcon className="w-4 h-4" />
               </button>
             )}
           </div>

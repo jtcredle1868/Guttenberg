@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { RoyaltyBreakdown } from '../../api/types';
 
 const MOCK_CHANNELS: RoyaltyBreakdown[] = [
-  { channel: 'amazon-kdp', displayName: 'Amazon KDP', listPrice: 0, platformFee: 0.30, royaltyRate: 0.70, royaltyAmount: 0, netProceeds: 0 },
-  { channel: 'ingram-spark', displayName: 'IngramSpark', listPrice: 0, platformFee: 0.45, printCost: 4.50, royaltyRate: 0.55, royaltyAmount: 0, netProceeds: 0 },
-  { channel: 'apple-books', displayName: 'Apple Books', listPrice: 0, platformFee: 0.30, royaltyRate: 0.70, royaltyAmount: 0, netProceeds: 0 },
-  { channel: 'kobo', displayName: 'Kobo', listPrice: 0, platformFee: 0.30, royaltyRate: 0.70, royaltyAmount: 0, netProceeds: 0 },
+  { channel: 'amazon-kdp', channel_name: 'Amazon KDP', format_type: 'ebook', list_price: 0, platform_fee: 0.30, distribution_fee: 0, gross_royalty: 0, royalty_rate: 0.70, net_royalty: 0 },
+  { channel: 'ingram-spark', channel_name: 'IngramSpark', format_type: 'paperback', list_price: 0, platform_fee: 0.45, distribution_fee: 4.50, gross_royalty: 0, royalty_rate: 0.55, net_royalty: 0 },
+  { channel: 'apple-books', channel_name: 'Apple Books', format_type: 'ebook', list_price: 0, platform_fee: 0.30, distribution_fee: 0, gross_royalty: 0, royalty_rate: 0.70, net_royalty: 0 },
+  { channel: 'kobo', channel_name: 'Kobo', format_type: 'ebook', list_price: 0, platform_fee: 0.30, distribution_fee: 0, gross_royalty: 0, royalty_rate: 0.70, net_royalty: 0 },
 ];
 
 export const RoyaltyCalculator = () => {
@@ -15,10 +15,10 @@ export const RoyaltyCalculator = () => {
   useEffect(() => {
     const p = parseFloat(price) || 0;
     setRows(MOCK_CHANNELS.map(ch => {
-      const royaltyAmount = p * ch.royaltyRate;
-      const printCostDeduction = ch.printCost || 0;
-      const netProceeds = royaltyAmount - printCostDeduction;
-      return { ...ch, listPrice: p, royaltyAmount: Math.max(0, royaltyAmount), netProceeds: Math.max(0, netProceeds) };
+      const gross_royalty = p * ch.royalty_rate;
+      const distributionDeduction = ch.distribution_fee || 0;
+      const net_royalty = gross_royalty - distributionDeduction;
+      return { ...ch, list_price: p, gross_royalty: Math.max(0, gross_royalty), net_royalty: Math.max(0, net_royalty) };
     }));
   }, [price]);
 
@@ -52,10 +52,10 @@ export const RoyaltyCalculator = () => {
           <tbody className="divide-y divide-gray-50">
             {rows.map(row => (
               <tr key={row.channel} className="hover:bg-gray-50">
-                <td className="py-3 font-medium text-gray-800">{row.displayName}</td>
-                <td className="py-3 text-right text-gray-600">{(row.royaltyRate * 100).toFixed(0)}%</td>
-                <td className="py-3 text-right text-primary-600 font-medium">${row.royaltyAmount.toFixed(2)}</td>
-                <td className="py-3 text-right text-green-600 font-semibold">${row.netProceeds.toFixed(2)}</td>
+                <td className="py-3 font-medium text-gray-800">{row.channel_name}</td>
+                <td className="py-3 text-right text-gray-600">{(row.royalty_rate * 100).toFixed(0)}%</td>
+                <td className="py-3 text-right text-primary-600 font-medium">${row.gross_royalty.toFixed(2)}</td>
+                <td className="py-3 text-right text-green-600 font-semibold">${row.net_royalty.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>

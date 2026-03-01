@@ -1,138 +1,228 @@
-import { Title, DashboardStats, AnalyticsData, SalesRecord, Disbursement } from './api/types';
+/**
+ * Mock data for Guttenberg investor demo.
+ * Used as fallback when backend API is not available.
+ */
 import { subDays, format } from 'date-fns';
+import {
+  TitleListItem, AnalyticsOverview, TimeSeriesPoint, ChannelBreakdown,
+  TerritoryBreakdown, ActivityEvent, Disbursement, RoyaltyBreakdown,
+} from './api/types';
 
-export const MOCK_TITLES: Title[] = [
+export const MOCK_TITLES: TitleListItem[] = [
   {
-    id: '1', title: 'The Silicon Valley Chronicles', subtitle: 'A Tech Entrepreneur\'s Journey',
-    authorId: '1', authorName: 'Alex Rivera', status: 'published',
-    coverUrl: undefined, language: 'en', publicationDate: '2024-01-15',
-    pageCount: 342, wordCount: 89000, genre: 'Business & Technology',
-    bisacCodes: ['BUS000000', 'BUS071000'], keywords: ['entrepreneurship', 'tech', 'startup'],
-    shortSynopsis: 'A gripping tale of Silicon Valley ambition and survival.',
-    readinessScore: 98,
-    formats: [{ id: 'f1', titleId: '1', type: 'print', status: 'complete', trimSize: '6x9', createdAt: '2024-01-10T00:00:00Z' },
-              { id: 'f2', titleId: '1', type: 'ebook', status: 'complete', createdAt: '2024-01-10T00:00:00Z' }],
-    channels: [
-      { id: 'c1', name: 'amazon-kdp', displayName: 'Amazon KDP', status: 'live', listPrice: 14.99, royaltyRate: 0.70, liveAt: '2024-01-15T00:00:00Z' },
-      { id: 'c2', name: 'ingram-spark', displayName: 'IngramSpark', status: 'live', listPrice: 16.99, royaltyRate: 0.55, liveAt: '2024-01-15T00:00:00Z' },
-      { id: 'c3', name: 'apple-books', displayName: 'Apple Books', status: 'live', listPrice: 12.99, royaltyRate: 0.70, liveAt: '2024-02-01T00:00:00Z' },
-      { id: 'c4', name: 'kobo', displayName: 'Kobo', status: 'live', listPrice: 12.99, royaltyRate: 0.70, liveAt: '2024-02-01T00:00:00Z' },
-    ],
-    createdAt: '2023-11-01T00:00:00Z', updatedAt: '2024-01-15T00:00:00Z',
+    id: '550e8400-e29b-41d4-a716-446655440001',
+    title: 'The Meridian Line',
+    subtitle: 'A Novel of Discovery',
+    primary_author: 'Sarah Mitchell',
+    genre: 'Literary Fiction',
+    status: 'live',
+    publishing_readiness_score: 92,
+    publication_date: '2026-03-15',
+    word_count: 87500,
+    format_count: 2,
+    channel_count: 5,
+    created_at: '2026-01-15T00:00:00Z',
+    updated_at: '2026-03-01T00:00:00Z',
   },
   {
-    id: '2', title: 'Midnight in the Quantum Garden', subtitle: undefined,
-    authorId: '1', authorName: 'Alex Rivera', status: 'published',
-    language: 'en', publicationDate: '2024-03-20',
-    pageCount: 412, wordCount: 115000, genre: 'Science Fiction',
-    readinessScore: 95,
-    formats: [{ id: 'f3', titleId: '2', type: 'ebook', status: 'complete', createdAt: '2024-03-15T00:00:00Z' },
-              { id: 'f4', titleId: '2', type: 'print', status: 'complete', trimSize: '5.5x8.5', createdAt: '2024-03-15T00:00:00Z' }],
-    channels: [
-      { id: 'c5', name: 'amazon-kdp', displayName: 'Amazon KDP', status: 'live', listPrice: 4.99, royaltyRate: 0.70, liveAt: '2024-03-20T00:00:00Z' },
-      { id: 'c6', name: 'apple-books', displayName: 'Apple Books', status: 'live', listPrice: 4.99, royaltyRate: 0.70, liveAt: '2024-03-25T00:00:00Z' },
-      { id: 'c7', name: 'kobo', displayName: 'Kobo', status: 'live', listPrice: 4.99, royaltyRate: 0.70, liveAt: '2024-04-01T00:00:00Z' },
-    ],
-    createdAt: '2024-01-15T00:00:00Z', updatedAt: '2024-03-20T00:00:00Z',
+    id: '550e8400-e29b-41d4-a716-446655440002',
+    title: 'Quantum Echoes',
+    subtitle: 'The Harker Conspiracy',
+    primary_author: 'Sarah Mitchell',
+    genre: 'Thriller',
+    status: 'ready',
+    publishing_readiness_score: 88,
+    publication_date: '2026-06-01',
+    word_count: 95200,
+    format_count: 2,
+    channel_count: 0,
+    created_at: '2026-02-01T00:00:00Z',
+    updated_at: '2026-02-28T00:00:00Z',
   },
   {
-    id: '3', title: 'The Minimalist Cookbook', subtitle: '100 Recipes for Mindful Eating',
-    authorId: '1', authorName: 'Alex Rivera', status: 'in-production',
-    language: 'en', pageCount: 256, wordCount: 45000, genre: 'Food & Lifestyle',
-    readinessScore: 72,
-    formats: [{ id: 'f5', titleId: '3', type: 'print', status: 'processing', trimSize: '8x10', createdAt: '2024-05-01T00:00:00Z' }],
-    channels: [],
-    createdAt: '2024-03-01T00:00:00Z', updatedAt: '2024-05-10T00:00:00Z',
+    id: '550e8400-e29b-41d4-a716-446655440003',
+    title: "The Starling's Song",
+    subtitle: '',
+    primary_author: 'Sarah Mitchell',
+    genre: 'Young Adult',
+    status: 'formatting',
+    publishing_readiness_score: 71,
+    word_count: 62000,
+    format_count: 1,
+    channel_count: 0,
+    created_at: '2026-02-10T00:00:00Z',
+    updated_at: '2026-02-25T00:00:00Z',
   },
   {
-    id: '4', title: 'Shadows of the Algorithm', subtitle: 'A Cyberpunk Thriller',
-    authorId: '1', authorName: 'Jordan Blake', status: 'draft',
-    language: 'en', wordCount: 23000, genre: 'Thriller',
-    readinessScore: 35,
-    formats: [],
-    channels: [],
-    createdAt: '2024-05-20T00:00:00Z', updatedAt: '2024-06-01T00:00:00Z',
+    id: '550e8400-e29b-41d4-a716-446655440004',
+    title: 'Foundations of Modern Publishing',
+    subtitle: 'From Gutenberg to Guttenberg',
+    primary_author: 'James Harrington',
+    genre: 'Non-Fiction',
+    status: 'live',
+    publishing_readiness_score: 95,
+    publication_date: '2026-01-15',
+    word_count: 52000,
+    format_count: 3,
+    channel_count: 4,
+    created_at: '2025-11-01T00:00:00Z',
+    updated_at: '2026-01-15T00:00:00Z',
   },
   {
-    id: '5', title: 'Leadership in the Digital Age', subtitle: 'Building High-Performance Teams',
-    authorId: '1', authorName: 'Alex Rivera', status: 'published',
-    language: 'en', publicationDate: '2023-09-01',
-    pageCount: 288, wordCount: 72000, genre: 'Business',
-    readinessScore: 100,
-    formats: [{ id: 'f6', titleId: '5', type: 'ebook', status: 'complete', createdAt: '2023-08-25T00:00:00Z' },
-              { id: 'f7', titleId: '5', type: 'print', status: 'complete', trimSize: '6x9', createdAt: '2023-08-25T00:00:00Z' }],
-    channels: [
-      { id: 'c8', name: 'amazon-kdp', displayName: 'Amazon KDP', status: 'live', listPrice: 19.99, royaltyRate: 0.70, liveAt: '2023-09-01T00:00:00Z' },
-      { id: 'c9', name: 'ingram-spark', displayName: 'IngramSpark', status: 'live', listPrice: 22.99, royaltyRate: 0.55, liveAt: '2023-09-05T00:00:00Z' },
-      { id: 'c10', name: 'apple-books', displayName: 'Apple Books', status: 'live', listPrice: 17.99, royaltyRate: 0.70, liveAt: '2023-09-10T00:00:00Z' },
-      { id: 'c11', name: 'kobo', displayName: 'Kobo', status: 'live', listPrice: 17.99, royaltyRate: 0.70, liveAt: '2023-09-10T00:00:00Z' },
-      { id: 'c12', name: 'barnes-noble', displayName: 'Barnes & Noble', status: 'live', listPrice: 19.99, royaltyRate: 0.65, liveAt: '2023-10-01T00:00:00Z' },
-    ],
-    createdAt: '2023-07-01T00:00:00Z', updatedAt: '2023-09-01T00:00:00Z',
+    id: '550e8400-e29b-41d4-a716-446655440005',
+    title: 'Ember & Ash',
+    subtitle: '',
+    primary_author: 'Sarah Mitchell',
+    genre: 'Romance',
+    status: 'draft',
+    publishing_readiness_score: 35,
+    word_count: 78000,
+    format_count: 0,
+    channel_count: 0,
+    created_at: '2026-02-20T00:00:00Z',
+    updated_at: '2026-02-28T00:00:00Z',
   },
 ];
 
-const generateDailySales = (days: number) =>
-  Array.from({ length: days }, (_, i) => ({
-    date: format(subDays(new Date(), days - 1 - i), 'yyyy-MM-dd'),
-    revenue: Math.round((Math.random() * 800 + 200) * 100) / 100,
-    units: Math.floor(Math.random() * 120 + 20),
-  }));
-
-export const MOCK_DASHBOARD_STATS: DashboardStats = {
-  totalTitles: 5, activeTitles: 3,
-  allTimeRevenue: 48732.50, totalRoyalties: 31275.80, activeChannels: 13,
-  salesLast30Days: generateDailySales(30),
-  recentActivity: [
-    { id: 'a1', type: 'distribution_live', title: 'Midnight in the Quantum Garden', description: 'Now live on Kobo Writing Life', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), meta: { channel: 'kobo' } },
-    { id: 'a2', type: 'sales_milestone', title: 'The Silicon Valley Chronicles', description: 'Reached 2,000 units sold milestone!', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString() },
-    { id: 'a3', type: 'format_complete', title: 'The Minimalist Cookbook', description: 'Print formatting job completed successfully', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString() },
-    { id: 'a4', type: 'payout_sent', title: 'Monthly Royalty Payment', description: '$2,847.32 disbursed to your account', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() },
-    { id: 'a5', type: 'review_received', title: 'Leadership in the Digital Age', description: '★★★★★ New 5-star review on Amazon', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString() },
-  ],
-  titleReadiness: MOCK_TITLES.map(t => ({
-    id: t.id, title: t.title, status: t.status, readinessScore: t.readinessScore,
-    formats: t.formats.map(f => f.type), channels: t.channels.filter(c => c.status === 'live').length,
-  })),
+export const MOCK_ANALYTICS_OVERVIEW: AnalyticsOverview = {
+  total_units: 12847,
+  total_revenue: 168432.50,
+  total_royalties: 98215.75,
+  active_channels: 5,
+  active_titles: 2,
 };
 
-export const MOCK_ANALYTICS: AnalyticsData = {
-  revenueOverTime: generateDailySales(90),
-  channelBreakdown: [
-    { channel: 'amazon-kdp', revenue: 28450, units: 3210, percentage: 58 },
-    { channel: 'ingram-spark', revenue: 9870, units: 520, percentage: 20 },
-    { channel: 'apple-books', revenue: 5930, units: 890, percentage: 12 },
-    { channel: 'kobo', revenue: 2450, units: 410, percentage: 5 },
-    { channel: 'barnes-noble', revenue: 2032, units: 280, percentage: 5 },
-  ],
-  topTitles: [
-    { titleId: '5', title: 'Leadership in the Digital Age', units: 2140, revenue: 21890, royalties: 14780 },
-    { titleId: '1', title: 'The Silicon Valley Chronicles', units: 1870, revenue: 17430, royalties: 11490 },
-    { titleId: '2', title: 'Midnight in the Quantum Garden', units: 1290, revenue: 6430, royalties: 4430 },
-  ],
-  territories: [
-    { country: 'United States', units: 2840, revenue: 31200 },
-    { country: 'United Kingdom', units: 980, revenue: 9870 },
-    { country: 'Canada', units: 540, revenue: 5430 },
-    { country: 'Australia', units: 410, revenue: 4120 },
-    { country: 'Germany', units: 280, revenue: 2810 },
-    { country: 'France', units: 210, revenue: 2100 },
-  ],
-  totalRevenue: 48732, totalUnits: 5300, averagePrice: 9.19, averageRoyaltyRate: 0.68,
+export const generateMockTimeSeries = (days: number = 30): TimeSeriesPoint[] => {
+  const data: TimeSeriesPoint[] = [];
+  for (let i = days; i >= 0; i--) {
+    const date = subDays(new Date(), i);
+    const baseUnits = 120 + Math.floor(Math.random() * 80);
+    const avgPrice = 12.5;
+    data.push({
+      date: format(date, 'yyyy-MM-dd'),
+      units: baseUnits,
+      revenue: Math.round(baseUnits * avgPrice * 100) / 100,
+      royalties: Math.round(baseUnits * avgPrice * 0.65 * 100) / 100,
+    });
+  }
+  return data;
 };
+
+export const MOCK_CHANNEL_BREAKDOWN: ChannelBreakdown[] = [
+  { channel: 'amazon_kdp', channel_name: 'Amazon KDP', units: 5890, revenue: 76570, percentage: 45.5 },
+  { channel: 'ingram_spark', channel_name: 'IngramSpark', units: 2450, revenue: 36750, percentage: 21.8 },
+  { channel: 'apple_books', channel_name: 'Apple Books', units: 2100, revenue: 27300, percentage: 16.2 },
+  { channel: 'kobo', channel_name: 'Kobo', units: 1507, revenue: 17582, percentage: 10.4 },
+  { channel: 'barnes_noble', channel_name: 'Barnes & Noble', units: 900, revenue: 10230, percentage: 6.1 },
+];
+
+export const MOCK_TERRITORY_BREAKDOWN: TerritoryBreakdown[] = [
+  { territory: 'US', units: 7708, revenue: 100192 },
+  { territory: 'GB', units: 2055, revenue: 26715 },
+  { territory: 'CA', units: 1284, revenue: 16692 },
+  { territory: 'AU', units: 900, revenue: 11700 },
+  { territory: 'DE', units: 514, revenue: 6682 },
+  { territory: 'FR', units: 257, revenue: 3341 },
+  { territory: 'JP', units: 129, revenue: 1677 },
+];
+
+export const MOCK_ACTIVITY_FEED: ActivityEvent[] = [
+  {
+    id: 'evt-1',
+    event_type: 'distribution_live',
+    message: 'The Meridian Line is now LIVE on Amazon KDP!',
+    metadata: { channel: 'amazon_kdp' },
+    is_read: false,
+    created_at: new Date(Date.now() - 2 * 3600000).toISOString(),
+  },
+  {
+    id: 'evt-2',
+    event_type: 'sales_milestone',
+    message: 'The Meridian Line reached 500 sales! 🎉',
+    metadata: { milestone: 500 },
+    is_read: false,
+    created_at: new Date(Date.now() - 8 * 3600000).toISOString(),
+  },
+  {
+    id: 'evt-3',
+    event_type: 'format_complete',
+    message: 'EPUB formatting complete for Quantum Echoes',
+    metadata: { format: 'epub' },
+    is_read: true,
+    created_at: new Date(Date.now() - 24 * 3600000).toISOString(),
+  },
+  {
+    id: 'evt-4',
+    event_type: 'royalty_disbursed',
+    message: 'February royalty payment of $2,847.50 disbursed',
+    metadata: { amount: 2847.50 },
+    is_read: true,
+    created_at: new Date(Date.now() - 48 * 3600000).toISOString(),
+  },
+  {
+    id: 'evt-5',
+    event_type: 'marketing_task_due',
+    message: 'ARC campaign for Quantum Echoes ends in 3 days',
+    metadata: {},
+    is_read: false,
+    created_at: new Date(Date.now() - 72 * 3600000).toISOString(),
+  },
+  {
+    id: 'evt-6',
+    event_type: 'distribution_live',
+    message: 'Foundations of Modern Publishing is LIVE on IngramSpark',
+    metadata: { channel: 'ingram_spark' },
+    is_read: true,
+    created_at: new Date(Date.now() - 96 * 3600000).toISOString(),
+  },
+];
+
+export const MOCK_ROYALTY_BREAKDOWN: RoyaltyBreakdown[] = [
+  { channel: 'amazon_kdp', channel_name: 'Amazon KDP', format_type: 'ebook', list_price: 14.99, gross_royalty: 10.49, distribution_fee: 0, platform_fee: 0.75, net_royalty: 9.74, royalty_rate: 0.70 },
+  { channel: 'amazon_kdp', channel_name: 'Amazon KDP', format_type: 'paperback', list_price: 19.99, gross_royalty: 12.00, distribution_fee: 4.50, platform_fee: 1.00, net_royalty: 6.50, royalty_rate: 0.60 },
+  { channel: 'ingram_spark', channel_name: 'IngramSpark', format_type: 'ebook', list_price: 14.99, gross_royalty: 6.75, distribution_fee: 0, platform_fee: 0.75, net_royalty: 6.00, royalty_rate: 0.45 },
+  { channel: 'apple_books', channel_name: 'Apple Books', format_type: 'ebook', list_price: 14.99, gross_royalty: 10.49, distribution_fee: 0, platform_fee: 0.75, net_royalty: 9.74, royalty_rate: 0.70 },
+  { channel: 'kobo', channel_name: 'Kobo', format_type: 'ebook', list_price: 14.99, gross_royalty: 10.49, distribution_fee: 0, platform_fee: 0.75, net_royalty: 9.74, royalty_rate: 0.70 },
+  { channel: 'barnes_noble', channel_name: 'Barnes & Noble', format_type: 'ebook', list_price: 14.99, gross_royalty: 9.74, distribution_fee: 0, platform_fee: 0.75, net_royalty: 8.99, royalty_rate: 0.65 },
+  { channel: 'guttenberg_store', channel_name: 'Guttenberg Store', format_type: 'ebook', list_price: 14.99, gross_royalty: 14.54, distribution_fee: 0, platform_fee: 0.45, net_royalty: 14.09, royalty_rate: 0.97 },
+];
 
 export const MOCK_DISBURSEMENTS: Disbursement[] = [
-  { id: 'd1', amount: 2847.32, currency: 'USD', status: 'paid', period: '2024-05', paidAt: '2024-06-15', method: 'Bank Transfer' },
-  { id: 'd2', amount: 3102.18, currency: 'USD', status: 'paid', period: '2024-04', paidAt: '2024-05-15', method: 'Bank Transfer' },
-  { id: 'd3', amount: 2654.90, currency: 'USD', status: 'paid', period: '2024-03', paidAt: '2024-04-15', method: 'Bank Transfer' },
-  { id: 'd4', amount: 2198.45, currency: 'USD', status: 'paid', period: '2024-02', paidAt: '2024-03-15', method: 'Bank Transfer' },
-  { id: 'd5', amount: 1876.30, currency: 'USD', status: 'paid', period: '2024-01', paidAt: '2024-02-15', method: 'Bank Transfer' },
+  { id: 'd-1', amount: 2847.50, currency: 'USD', payment_method: 'stripe', payment_status: 'completed', period_start: '2026-02-01', period_end: '2026-02-28', created_at: '2026-03-01T00:00:00Z' },
+  { id: 'd-2', amount: 3215.00, currency: 'USD', payment_method: 'stripe', payment_status: 'completed', period_start: '2026-01-01', period_end: '2026-01-31', created_at: '2026-02-01T00:00:00Z' },
+  { id: 'd-3', amount: 1890.75, currency: 'USD', payment_method: 'stripe', payment_status: 'completed', period_start: '2025-12-01', period_end: '2025-12-31', created_at: '2026-01-01T00:00:00Z' },
 ];
 
-export const MOCK_SALES: SalesRecord[] = [
-  { id: 's1', titleId: '1', titleName: 'The Silicon Valley Chronicles', formatType: 'print', channelName: 'Amazon KDP', units: 124, revenue: 1858.76, royalties: 1301.13, reportingPeriod: '2024-05', saleDate: '2024-05-31' },
-  { id: 's2', titleId: '5', titleName: 'Leadership in the Digital Age', formatType: 'ebook', channelName: 'Amazon KDP', units: 231, revenue: 4618.69, royalties: 3233.08, reportingPeriod: '2024-05', saleDate: '2024-05-31' },
-  { id: 's3', titleId: '2', titleName: 'Midnight in the Quantum Garden', formatType: 'ebook', channelName: 'Apple Books', units: 87, revenue: 434.13, royalties: 303.89, reportingPeriod: '2024-05', saleDate: '2024-05-31' },
-  { id: 's4', titleId: '1', titleName: 'The Silicon Valley Chronicles', formatType: 'ebook', channelName: 'Kobo', units: 56, revenue: 727.44, royalties: 509.21, reportingPeriod: '2024-05', saleDate: '2024-05-31' },
-  { id: 's5', titleId: '5', titleName: 'Leadership in the Digital Age', formatType: 'print', channelName: 'IngramSpark', units: 42, revenue: 965.58, royalties: 530.07, reportingPeriod: '2024-05', saleDate: '2024-05-31' },
+export const TEMPLATE_CATALOG = [
+  { name: 'Meridian', genre_target: 'Literary Fiction', description: 'Clean serif body, decorative chapter opener, single-column layout', trim_sizes: ['6x9'], features: ['Drop caps', 'Ornamental dividers', 'Running headers'] },
+  { name: 'Velocity', genre_target: 'Thriller / Mystery', description: 'Bold chapter numbers, wide margins, scene break ornaments', trim_sizes: ['5.5x8.5'], features: ['Bold headings', 'Scene breaks', 'Tight spacing'] },
+  { name: 'Ember', genre_target: 'Romance / Women\'s Fiction', description: 'Script-accented chapter titles, generous leading, ornamental dividers', trim_sizes: ['5.5x8.5'], features: ['Script accents', 'Floral ornaments', 'Generous spacing'] },
+  { name: 'Codex', genre_target: 'Non-fiction / Business', description: 'Sans-serif headers, callout boxes, pull quotes, part/chapter hierarchy', trim_sizes: ['6x9'], features: ['Callout boxes', 'Pull quotes', 'Charts support'] },
+  { name: 'Pinnacle', genre_target: 'Academic / Scholarly', description: 'Chicago footnote support, wide margins for annotations', trim_sizes: ['6x9'], features: ['Footnotes', 'Citations', 'Wide margins'] },
+  { name: 'Horizon', genre_target: 'Children\'s / Middle Grade', description: 'Large body font, illustrated chapter headers, dyslexia-friendly spacing', trim_sizes: ['5x8'], features: ['Large font', 'Illustrations', 'Accessible spacing'] },
+  { name: 'Spectrum', genre_target: 'Young Adult', description: 'Contemporary sans-serif, alternating chapter decorations', trim_sizes: ['5.5x8.5'], features: ['Modern design', 'Alt decorations', 'Clean layout'] },
+  { name: 'Atlas', genre_target: 'Technical / Manual', description: 'Two-column option, table support, numbered steps', trim_sizes: ['8.5x11'], features: ['Two-column', 'Tables', 'Numbered steps'] },
 ];
+
+// Channel color mapping for charts
+export const CHANNEL_COLORS: Record<string, string> = {
+  amazon_kdp: '#FF9900',
+  ingram_spark: '#2563EB',
+  apple_books: '#A855F7',
+  kobo: '#EF4444',
+  barnes_noble: '#10B981',
+  google_play: '#F59E0B',
+  guttenberg_store: '#6366F1',
+};
+
+export const TERRITORY_NAMES: Record<string, string> = {
+  US: 'United States',
+  GB: 'United Kingdom',
+  CA: 'Canada',
+  AU: 'Australia',
+  DE: 'Germany',
+  FR: 'France',
+  JP: 'Japan',
+  IN: 'India',
+  BR: 'Brazil',
+};
