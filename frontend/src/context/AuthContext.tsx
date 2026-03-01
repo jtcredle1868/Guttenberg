@@ -1,6 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../api/types';
-import { login as apiLogin, getProfile, logout as apiLogout } from '../api/auth';
+
+// ---------------------------------------------------------------------------
+// Demo user for offline / demo mode (no backend required)
+// ---------------------------------------------------------------------------
+
+const DEMO_USER: User = {
+  id: 1,
+  username: 'demo',
+  email: 'demo@guttenberg.io',
+  first_name: 'Alex',
+  last_name: 'Rivera',
+};
 
 interface AuthContextType {
   user: User | null;
@@ -13,34 +24,31 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    // Restore demo session from localStorage
+    return localStorage.getItem('access_token') ? DEMO_USER : null;
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // In demo mode, resolve immediately
     const token = localStorage.getItem('access_token');
     if (token) {
-      getProfile()
-        .then((data) => setUser(data))
-        .catch(() => {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-        })
-        .finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
+      setUser(DEMO_USER);
     }
+    setIsLoading(false);
   }, []);
 
-  const login = async (username: string, password: string) => {
-    const tokens = await apiLogin(username, password);
-    localStorage.setItem('access_token', tokens.access);
-    localStorage.setItem('refresh_token', tokens.refresh);
-    const profile = await getProfile();
-    setUser(profile);
+  const login = async (_username: string, _password: string) => {
+    // Demo login — always succeeds
+    localStorage.setItem('access_token', 'demo-token');
+    localStorage.setItem('refresh_token', 'demo-token');
+    setUser(DEMO_USER);
   };
 
   const logout = () => {
-    apiLogout();
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     setUser(null);
   };
 
