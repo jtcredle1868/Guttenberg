@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 3001;
 // ─── Security & utilities ─────────────────────────────────────────────────────
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true,
 }));
 app.use((0, compression_1.default)());
