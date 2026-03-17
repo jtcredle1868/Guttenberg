@@ -34,23 +34,52 @@ function buildToken(user) {
     const signature = Buffer.from('mock-signature').toString('base64');
     return `${header}.${payload}.${signature}`;
 }
+// Constant-time-ish string comparison to mitigate timing side-channels on demo passwords
+function safeEqual(a, b) {
+    if (a.length !== b.length)
+        return false;
+    let diff = 0;
+    for (let i = 0; i < a.length; i++)
+        diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    return diff === 0;
+}
 // POST /api/auth/login
 router.post('/login', (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) {
-        return res.status(400).json({
+    const rawEmail = req.body?.email;
+    const rawPassword = req.body?.password;
+    // Type and length validation
+    if (typeof rawEmail !== 'string' || rawEmail.length === 0 ||
+        typeof rawPassword !== 'string' || rawPassword.length === 0) {
+        res.status(400).json({
             error: {
                 code: 'GUT-4000',
                 message: 'Missing credentials',
-                detail: 'Both email and password fields are required.',
+                detail: 'Both email and password fields are required strings.',
                 resolution: 'Provide email and password in the request body.',
                 docs_url: 'https://docs.guttenberg.io/errors/GUT-4000',
             },
         });
+        return;
     }
-    const user = mockUsers.find((u) => u.email === email && u.password === password);
+    // Reject suspiciously long values before any lookup
+    if (rawEmail.length > 254 || rawPassword.length > 128) {
+        res.status(400).json({
+            error: {
+                code: 'GUT-4000',
+                message: 'Invalid credentials format',
+                detail: 'Email or password exceeds maximum allowed length.',
+                resolution: 'Provide valid email and password values.',
+                docs_url: 'https://docs.guttenberg.io/errors/GUT-4000',
+            },
+        });
+        return;
+    }
+    const email = rawEmail.trim().toLowerCase();
+    const password = rawPassword;
+    const user = mockUsers.find(u => u.email === email && safeEqual(u.password, password));
     if (!user) {
-        return res.status(401).json({
+        // Always respond with a generic message to avoid user-enumeration
+        res.status(401).json({
             error: {
                 code: 'GUT-4013',
                 message: 'Invalid credentials',
@@ -59,9 +88,10 @@ router.post('/login', (req, res) => {
                 docs_url: 'https://docs.guttenberg.io/errors/GUT-4013',
             },
         });
+        return;
     }
     const token = buildToken(user);
-    return res.json({
+    res.json({
         token,
         user: {
             id: user.id,
@@ -75,9 +105,6 @@ router.post('/login', (req, res) => {
 });
 // GET /api/auth/verify
 router.get('/verify', auth_1.authMiddleware, (req, res) => {
-    return res.json({
-        valid: true,
-        user: req.user,
-    });
+    res.json({ valid: true, user: req.user });
 });
 exports.default = router;

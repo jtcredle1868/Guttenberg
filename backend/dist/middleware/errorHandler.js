@@ -3,15 +3,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.errorHandler = errorHandler;
 exports.notFoundHandler = notFoundHandler;
 exports.createError = createError;
-function errorHandler(err, req, res, next) {
+const IS_PROD = process.env.NODE_ENV === 'production';
+function errorHandler(err, req, res, _next) {
     const statusCode = err.statusCode || 500;
     const code = err.code || 'GUT-5000';
+    // In production, mask internal details from 5xx responses
+    const isInternal = statusCode >= 500;
+    const message = isInternal && IS_PROD ? 'An unexpected error occurred' : (err.message || 'An unexpected error occurred');
+    const detail = isInternal && IS_PROD ? null : (err.detail || null);
+    const resolution = err.resolution || 'Please try again or contact support if the problem persists.';
+    // Log full error server-side regardless of env
+    if (isInternal) {
+        console.error(`[${code}] ${req.method} ${req.path}`, err);
+    }
     res.status(statusCode).json({
         error: {
             code,
-            message: err.message || 'An unexpected error occurred',
-            detail: err.detail || null,
-            resolution: err.resolution || 'Please try again or contact support if the problem persists.',
+            message,
+            detail,
+            resolution,
             docs_url: `https://docs.guttenberg.io/errors/${code}`,
         },
     });
