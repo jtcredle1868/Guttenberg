@@ -2,16 +2,221 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ── Google Fonts ─────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Design tokens ────────────────────────────────────────────────────────── */
+:root {
+  /* Navy Blue */
+  --color-navy-950: #060e1a;
+  --color-navy-900: #0a1628;
+  --color-navy-800: #132650;
+  --color-navy-700: #1e3a6e;
+  --color-navy-600: #2d5190;
+  --color-navy-500: #3966a8;
+  --color-navy-400: #577eb5;
+
+  /* Gold */
+  --color-gold-400: #d4af37;
+  --color-gold-300: #edc74a;
+  --color-gold-200: #f5dd8a;
+  --color-gold-100: #faeec4;
+
+  /* Tan/Cream */
+  --color-tan-50:  #fdf9f4;
+  --color-tan-100: #f8f0e4;
+  --color-tan-200: #f0dfc8;
+  --color-tan-300: #e5c9a4;
+
+  /* Surfaces */
+  --surface-page:      #f8f0e4;
+  --surface-card:      #fdf9f4;
+  --surface-sidebar:   #0a1628;
+  --surface-header:    #ffffff;
+
+  /* Text */
+  --text-primary:   #0a1628;
+  --text-secondary: #2d5190;
+  --text-muted:     #577eb5;
+  --text-inverse:   #fdf9f4;
+
+  /* Border */
+  --border-subtle:  rgba(30, 58, 110, 0.10);
+  --border-medium:  rgba(30, 58, 110, 0.18);
+  --border-gold:    rgba(212, 175, 55, 0.40);
+
+  /* Spacing / radius */
+  --radius-sm:  0.5rem;
+  --radius-md:  0.75rem;
+  --radius-lg:  1rem;
+  --radius-xl:  1.5rem;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* ── Base reset ───────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Custom scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(30, 58, 110, 0.25);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(30, 58, 110, 0.45);
+}
+
+/* ── Focus ring ───────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-gold-400);
+  outline-offset: 2px;
+}
+
+/* ── Utility layer ────────────────────────────────────────────────────────── */
+@layer components {
+  /* Page scaffold */
+  .page-bg {
+    @apply bg-tan-100 min-h-screen;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-tan-50 rounded-2xl border shadow-card;
+    border-color: var(--border-subtle);
+  }
+  .card:hover {
+    @apply shadow-card-hover;
+    border-color: var(--border-medium);
+  }
+  .card-navy {
+    @apply bg-navy-900 rounded-2xl border;
+    border-color: rgba(255,255,255,0.08);
+  }
+
+  /* Buttons — Gold (primary) */
+  .btn-gold {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm
+           text-navy-900 bg-gold-400 hover:bg-gold-300 active:bg-gold-500
+           transition-all duration-150 shadow-gold focus-visible:ring-2 focus-visible:ring-gold-300;
+  }
+  /* Buttons — Navy (secondary) */
+  .btn-navy {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm
+           text-white bg-navy-700 hover:bg-navy-600 active:bg-navy-800
+           transition-all duration-150 shadow-navy;
+  }
+  /* Buttons — Ghost */
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm
+           text-navy-700 border hover:bg-tan-100 active:bg-tan-200
+           transition-all duration-150;
+    border-color: var(--border-medium);
+  }
+
+  /* Form inputs */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl text-sm text-navy-900 bg-white border
+           placeholder-navy-400/50 focus:outline-none focus:ring-2 focus:ring-gold-400
+           transition-shadow duration-150;
+    border-color: var(--border-medium);
+  }
+  .input-label {
+    @apply block text-xs font-semibold text-navy-700 mb-1.5 uppercase tracking-wide;
+  }
+
+  /* Stat card */
+  .stat-card {
+    @apply card p-6 flex items-start gap-4;
+  }
+  .stat-icon {
+    @apply flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center;
+  }
+
+  /* Table */
+  .data-table thead th {
+    @apply text-left py-3 text-xs font-bold uppercase tracking-wider;
+    color: var(--text-secondary);
+  }
+  .data-table tbody tr {
+    @apply border-b last:border-0 transition-colors;
+    border-color: var(--border-subtle);
+  }
+  .data-table tbody tr:hover {
+    @apply bg-tan-100/60;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset;
+  }
+
+  /* Nav link (sidebar) */
+  .nav-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150;
+    color: rgba(213,224,240,0.75);
+  }
+  .nav-link:hover {
+    background: rgba(255,255,255,0.07);
+    color: #fff;
+  }
+  .nav-link.active {
+    background: linear-gradient(135deg, rgba(212,175,55,0.15) 0%, rgba(212,175,55,0.08) 100%);
+    color: #d4af37;
+    @apply ring-1;
+    ring-color: rgba(212,175,55,0.3);
+  }
+}
+
+/* ── Skeleton shimmer ─────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(30,58,110,0.06) 25%,
+    rgba(30,58,110,0.12) 50%,
+    rgba(30,58,110,0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* ── Recharts overrides ───────────────────────────────────────────────────── */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 8px 24px rgba(10,22,40,0.15) !important;
+  background: #fdf9f4 !important;
+}
+
+/* ── Texture overlay helper ───────────────────────────────────────────────── */
+.texture-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  border-radius: inherit;
 }

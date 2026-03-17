@@ -14,11 +14,11 @@ export const Layout = ({ children, title, breadcrumbs }: LayoutProps) => {
   const { sidebarCollapsed } = useApp();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: '#f0dfc8' }}>
       <Sidebar />
       <div className={clsx('transition-all duration-300', sidebarCollapsed ? 'ml-16' : 'ml-64')}>
         <Header title={title} breadcrumbs={breadcrumbs} />
-        <main className="p-6">{children}</main>
+        <main className="p-6 animate-fade-in">{children}</main>
       </div>
     </div>
   );
