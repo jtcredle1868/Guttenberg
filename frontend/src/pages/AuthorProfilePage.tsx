@@ -1,568 +1,405 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Layout } from '../components/layout/Layout';
-import { useToast } from '../components/ui/Toast';
-import { useAuth } from '../context/AuthContext';
-import { MOCK_TITLES } from '../mockData';
 import {
-  UserCircleIcon, GlobeAltIcon, EnvelopeIcon,
-  BookOpenIcon, PencilSquareIcon,
+  UserCircleIcon,
+  GlobeAltIcon,
+  ArrowDownTrayIcon,
+  PencilSquareIcon,
+  BookOpenIcon,
+  TrophyIcon,
+  PhotoIcon,
+  StarIcon,
 } from '@heroicons/react/24/outline';
+import clsx from 'clsx';
+import type { AuthorProfile } from '../api/types';
+import { MOCK_TITLES } from '../mockData';
 
+/* ── Mock author data ──────────────────────────────────────────────────────── */
+const MOCK_AUTHOR: AuthorProfile = {
+  id: 'auth-001',
+  name: 'Eleanor Voss',
+  penName: 'E.K. Voss',
+  tagline: 'USA Today Bestselling Author of Literary Fiction',
+  genres: ['Literary Fiction', 'Psychological Thriller'],
+  location: 'New York, NY',
+  website: 'https://eleanor-voss.com',
+  twitter: '@EleanorVoss',
+  instagram: '@evoss_writes',
+  goodreads: 'Eleanor_Voss',
+  totalTitles: 6,
+  totalSales: 48200,
+  countriesReached: 24,
+  reviews: 1847,
+  bio: {
+    short: 'Eleanor Voss is a USA Today bestselling author of literary fiction and psychological thrillers. Her debut novel won the PEN/Faulkner Award.',
+    medium: "Eleanor Voss is a USA Today bestselling author known for her intricate narratives and psychologically complex characters. Her debut novel, The Glass Meridian, won the PEN/Faulkner Award and spent 14 weeks on the New York Times bestseller list. She holds an MFA from the Iowa Writers' Workshop.",
+    full: "Eleanor Voss is a USA Today bestselling author of literary fiction and psychological thrillers, celebrated for her nuanced prose and deeply human storytelling. Her debut novel, The Glass Meridian, was awarded the PEN/Faulkner Award for Fiction and spent fourteen weeks on the New York Times bestseller list. Her subsequent works have been translated into 24 languages and distributed in 38 countries. Voss holds an MFA from the Iowa Writers' Workshop and a BA in Comparative Literature from Yale University. She divides her time between New York City and her writing retreat in Vermont, where she is at work on her fifth novel.",
+  },
+  awards: [
+    { year: 2022, award: 'PEN/Faulkner Award for Fiction', book: 'The Glass Meridian' },
+    { year: 2021, award: 'New York Times Bestseller #3',   book: 'The Glass Meridian' },
+    { year: 2023, award: 'USA Today Bestseller',           book: 'Lead Without Limits' },
+  ],
+};
+
+/* ── Inline styles ─────────────────────────────────────────────────────────── */
 const cardStyle: React.CSSProperties = {
-  background: 'linear-gradient(145deg, #1a2d4e 0%, #0f2040 100%)',
-  border: '1px solid rgba(61,96,128,0.22)',
-  boxShadow: '0 1px 4px rgba(5,13,26,0.40), 0 4px 16px rgba(5,13,26,0.20)',
+  background: 'linear-gradient(145deg, rgba(26,45,78,0.80) 0%, rgba(15,32,64,0.80) 100%)',
+  border: '1px solid rgba(61,96,128,0.25)',
   borderRadius: '1rem',
-  padding: '1.5rem',
   backdropFilter: 'blur(8px)',
 };
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '0.625rem 1rem',
-  background: 'rgba(10,22,40,0.60)',
-  border: '1px solid rgba(61,96,128,0.40)',
-  borderRadius: '0.75rem',
-  color: '#c5d8e8',
-  fontSize: '0.875rem',
-  outline: 'none',
-  fontFamily: 'Inter, sans-serif',
-};
+type Tab = 'about' | 'portfolio' | 'awards' | 'mediakit';
+type BioVariant = 'short' | 'medium' | 'full';
 
-const textareaStyle: React.CSSProperties = {
-  ...inputStyle,
-  resize: 'vertical',
-  minHeight: '7rem',
-  padding: '0.75rem 1rem',
-};
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '0.6875rem',
-  fontWeight: 600,
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
-  color: 'rgba(138,175,200,0.75)',
-  marginBottom: '0.375rem',
-  fontFamily: 'Inter, sans-serif',
-};
-
-const SOCIAL_PLATFORMS = [
-  { key: 'website',   label: 'Website',   placeholder: 'https://yoursite.com', icon: GlobeAltIcon },
-  { key: 'email',     label: 'Media Email', placeholder: 'press@yoursite.com', icon: EnvelopeIcon },
-  { key: 'twitter',   label: 'X / Twitter', placeholder: '@yourhandle', icon: null },
-  { key: 'instagram', label: 'Instagram',  placeholder: '@yourhandle', icon: null },
-  { key: 'goodreads', label: 'Goodreads',  placeholder: 'Profile URL', icon: null },
-  { key: 'substack',  label: 'Substack',   placeholder: 'yourname.substack.com', icon: null },
+const TABS: { id: Tab; label: string; icon: React.FC<any> }[] = [
+  { id: 'about',     label: 'About',              icon: PencilSquareIcon },
+  { id: 'portfolio', label: 'Portfolio',           icon: BookOpenIcon },
+  { id: 'awards',    label: 'Awards & Recognition',icon: TrophyIcon },
+  { id: 'mediakit',  label: 'Media Kit',           icon: ArrowDownTrayIcon },
 ];
 
-const GENRES_LIST = [
-  'Fiction', 'Literary Fiction', 'Science Fiction', 'Fantasy', 'Mystery', 'Thriller',
-  'Romance', 'Historical Fiction', 'Horror', 'Non-Fiction', 'Business', 'Self-Help',
-  'Biography', 'History', 'Poetry',
-];
-
+/* ── Main page ─────────────────────────────────────────────────────────────── */
 export const AuthorProfilePage = () => {
-  const { user } = useAuth();
-  const toast = useToast();
+  const [author, setAuthor]       = useState<AuthorProfile>(MOCK_AUTHOR);
+  const [activeTab, setActiveTab] = useState<Tab>('about');
+  const [bioVariant, setBioVariant] = useState<BioVariant>('medium');
+  const [bioEdits, setBioEdits]   = useState({ ...MOCK_AUTHOR.bio });
+  const [isSaving, setIsSaving]   = useState(false);
+  const [savedMsg, setSavedMsg]   = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const publishedTitles = MOCK_TITLES.filter(t => t.status === 'published');
-  const totalTitles = MOCK_TITLES.length;
-
-  const [form, setForm] = useState({
-    displayName:  user?.name || 'Alex Rivera',
-    penName:      '',
-    bio:          'Award-winning author of speculative fiction and narrative non-fiction. My work explores the intersection of technology, identity, and what it means to be human in an age of constant change.',
-    shortBio:     'Author of speculative fiction. Writing at the intersection of technology and identity.',
-    website:      'https://alexrivera.author',
-    email:        'press@alexrivera.author',
-    twitter:      '@alexrivera_writes',
-    instagram:    '',
-    goodreads:    '',
-    substack:     '',
-    genres:       ['Literary Fiction', 'Science Fiction'],
-  });
-  const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'preview'>('profile');
-
-  const getFocusStyle = (key: string): React.CSSProperties => ({
-    ...inputStyle,
-    borderColor: focusedField === key ? 'rgba(212,175,55,0.60)' : 'rgba(61,96,128,0.40)',
-    boxShadow: focusedField === key ? '0 0 0 3px rgba(201,162,39,0.12)' : 'none',
-  });
-
-  const handleSave = () => {
+  const handleSaveProfile = () => {
     setIsSaving(true);
+    setSavedMsg('');
     setTimeout(() => {
+      setAuthor(prev => ({ ...prev, bio: bioEdits }));
       setIsSaving(false);
-      toast.success('Author profile updated successfully!');
-    }, 1000);
+      setSavedMsg('Profile saved!');
+      setTimeout(() => setSavedMsg(''), 3000);
+    }, 800);
   };
 
-  const toggleGenre = (genre: string) => {
-    setForm(f => ({
-      ...f,
-      genres: f.genres.includes(genre)
-        ? f.genres.filter(g => g !== genre)
-        : [...f.genres, genre],
-    }));
+  const handleDownload = (type: string) => {
+    alert(`Downloading ${type}… (mock)`);
   };
+
+  const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
+
+  const QUICK_STATS = [
+    { label: 'Total Titles',      value: author.totalTitles,              icon: BookOpenIcon,   color: '#d4af37' },
+    { label: 'Total Sales',       value: author.totalSales.toLocaleString(), icon: StarIcon,    color: '#4ade80' },
+    { label: 'Countries Reached', value: author.countriesReached,         icon: GlobeAltIcon,   color: '#60a5fa' },
+    { label: 'Reviews',           value: author.reviews.toLocaleString(), icon: TrophyIcon,     color: '#c084fc' },
+  ];
+
+  const SOCIAL_LINKS = [
+    { label: 'Website',    value: author.website,   icon: GlobeAltIcon,  href: author.website  },
+    { label: 'Twitter/X',  value: author.twitter,   icon: GlobeAltIcon,  href: `https://twitter.com/${author.twitter?.replace('@', '')}` },
+    { label: 'Instagram',  value: author.instagram, icon: GlobeAltIcon,  href: `https://instagram.com/${author.instagram?.replace('@', '')}` },
+    { label: 'Goodreads',  value: author.goodreads, icon: BookOpenIcon,  href: `https://goodreads.com/${author.goodreads}` },
+  ];
 
   return (
-    <Layout title="Author Profile" breadcrumbs={[{ label: 'Author Profile' }]}>
+    <Layout title="Author Profile" breadcrumbs={[{ label: 'Author Tools' }, { label: 'Author Profile' }]}>
+      <div className="space-y-5">
 
-      {/* Tab bar */}
-      <div
-        className="flex gap-0.5 mb-5 p-1 rounded-xl w-fit"
-        style={{ background: 'rgba(5,13,26,0.60)', border: '1px solid rgba(61,96,128,0.22)' }}
-      >
-        {(['profile', 'preview'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className="px-5 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 capitalize"
-            style={
-              activeTab === tab
-                ? {
-                    background: 'linear-gradient(135deg, #1a2d4e 0%, #243b55 100%)',
-                    border: '1px solid rgba(212,175,55,0.25)',
-                    color: '#d4af37',
-                    fontFamily: 'Inter, sans-serif',
-                  }
-                : {
-                    color: 'rgba(138,175,200,0.60)',
-                    fontFamily: 'Inter, sans-serif',
-                    border: '1px solid transparent',
-                  }
-            }
-          >
-            {tab === 'profile' ? 'Edit Profile' : 'Public Preview'}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === 'profile' ? (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-
-          {/* Left: avatar & stats */}
-          <div className="xl:col-span-1 space-y-4">
-            <div style={cardStyle}>
-              <div className="flex flex-col items-center text-center">
-                {/* Avatar */}
-                <div
-                  className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold mb-4 relative"
-                  style={{
-                    background: 'linear-gradient(135deg, #c9a227 0%, #d4af37 60%, #c4a882 100%)',
-                    color: '#0a1628',
-                    fontFamily: '"Playfair Display", Georgia, serif',
-                    boxShadow: '0 4px 20px rgba(212,175,55,0.30)',
-                  }}
-                >
-                  {(form.displayName || 'A').charAt(0).toUpperCase()}
-                  <button
-                    onClick={() => toast.info('Photo upload coming soon')}
-                    className="absolute bottom-0 right-0 w-7 h-7 rounded-full flex items-center justify-center transition-all"
-                    style={{
-                      background: 'rgba(10,22,40,0.90)',
-                      border: '2px solid rgba(212,175,55,0.40)',
-                      color: '#d4af37',
-                    }}
-                  >
-                    <PencilSquareIcon className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <p
-                  className="text-lg font-bold"
-                  style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
-                >
-                  {form.displayName}
-                </p>
-                {form.penName && (
-                  <p className="text-xs mt-0.5" style={{ color: 'rgba(138,175,200,0.60)', fontFamily: 'Inter, sans-serif' }}>
-                    aka {form.penName}
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-1 mt-2 justify-center">
-                  {form.genres.slice(0, 3).map(g => (
-                    <span
-                      key={g}
-                      className="text-xs px-2 py-0.5 rounded-full"
-                      style={{
-                        background: 'rgba(212,175,55,0.10)',
-                        color: '#d4af37',
-                        border: '1px solid rgba(212,175,55,0.25)',
-                        fontFamily: 'Inter, sans-serif',
-                      }}
-                    >
-                      {g}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Stats */}
+        {/* ── Profile hero header ──────────────────────────────────── */}
+        <div style={cardStyle} className="p-6">
+          <div className="flex flex-wrap items-center gap-6">
+            {/* Avatar */}
+            <div className="relative shrink-0">
               <div
-                className="grid grid-cols-2 gap-3 mt-5 pt-5"
-                style={{ borderTop: '1px solid rgba(61,96,128,0.18)' }}
+                className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold font-playfair"
+                style={{
+                  background: 'linear-gradient(135deg, #1a2d4e, #0a1628)',
+                  border: '3px solid #c9a227',
+                  boxShadow: '0 0 0 4px rgba(201,162,39,0.15), 0 8px 32px rgba(5,13,26,0.6)',
+                  color: '#c9a227',
+                }}
               >
-                {[
-                  { label: 'Published', value: publishedTitles.length, icon: BookOpenIcon },
-                  { label: 'Total Titles', value: totalTitles, icon: BookOpenIcon },
-                ].map(s => (
-                  <div key={s.label} className="text-center">
-                    <p
-                      className="text-2xl font-bold"
-                      style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#d4af37' }}
-                    >
-                      {s.value}
-                    </p>
-                    <p
-                      className="text-xs"
-                      style={{ color: 'rgba(90,127,160,0.60)', fontFamily: 'Inter, sans-serif' }}
-                    >
-                      {s.label}
-                    </p>
-                  </div>
-                ))}
+                {author.name.split(' ').map(n => n[0]).join('')}
               </div>
-            </div>
-
-            {/* Genres */}
-            <div style={cardStyle}>
-              <h3
-                className="text-sm font-bold mb-3"
-                style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gold-600 flex items-center justify-center shadow-lg hover:bg-gold-500 transition-colors"
               >
-                Genre Specialties
-              </h3>
-              <div className="flex flex-wrap gap-1.5">
-                {GENRES_LIST.map(genre => {
-                  const active = form.genres.includes(genre);
-                  return (
-                    <button
-                      key={genre}
-                      onClick={() => toggleGenre(genre)}
-                      className="text-xs px-2.5 py-1 rounded-full font-medium transition-all"
-                      style={
-                        active
-                          ? {
-                              background: 'rgba(212,175,55,0.15)',
-                              color: '#d4af37',
-                              border: '1px solid rgba(212,175,55,0.35)',
-                              fontFamily: 'Inter, sans-serif',
-                            }
-                          : {
-                              background: 'rgba(26,45,78,0.60)',
-                              color: 'rgba(138,175,200,0.60)',
-                              border: '1px solid rgba(61,96,128,0.25)',
-                              fontFamily: 'Inter, sans-serif',
-                            }
-                      }
-                    >
-                      {genre}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Right: form fields */}
-          <div className="xl:col-span-2 space-y-4">
-
-            {/* Identity */}
-            <div style={cardStyle}>
-              <div className="flex items-center gap-2 mb-4">
-                <UserCircleIcon className="w-4 h-4" style={{ color: '#d4af37' }} />
-                <h3
-                  className="text-sm font-bold"
-                  style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
-                >
-                  Identity
-                </h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label style={labelStyle}>Display Name</label>
-                  <input
-                    value={form.displayName}
-                    onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))}
-                    style={getFocusStyle('displayName')}
-                    onFocus={() => setFocusedField('displayName')}
-                    onBlur={() => setFocusedField(null)}
-                    placeholder="Your real name or primary pen name"
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>Pen Name <span style={{ color: 'rgba(138,175,200,0.45)', fontWeight: 400 }}>(optional)</span></label>
-                  <input
-                    value={form.penName}
-                    onChange={e => setForm(f => ({ ...f, penName: e.target.value }))}
-                    style={getFocusStyle('penName')}
-                    onFocus={() => setFocusedField('penName')}
-                    onBlur={() => setFocusedField(null)}
-                    placeholder="Alternative publishing name"
-                  />
-                </div>
-              </div>
+                <PhotoIcon className="w-3.5 h-3.5 text-navy-900" />
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" />
             </div>
 
-            {/* Bio */}
-            <div style={cardStyle}>
-              <div className="flex items-center gap-2 mb-4">
-                <PencilSquareIcon className="w-4 h-4" style={{ color: '#c4a882' }} />
-                <h3
-                  className="text-sm font-bold"
-                  style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
-                >
-                  Biography
-                </h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label style={labelStyle}>Full Bio</label>
-                  <textarea
-                    value={form.bio}
-                    onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
-                    style={{
-                      ...textareaStyle,
-                      borderColor: focusedField === 'bio' ? 'rgba(212,175,55,0.60)' : 'rgba(61,96,128,0.40)',
-                      boxShadow: focusedField === 'bio' ? '0 0 0 3px rgba(201,162,39,0.12)' : 'none',
-                    }}
-                    onFocus={() => setFocusedField('bio')}
-                    onBlur={() => setFocusedField(null)}
-                    placeholder="Your full author biography (shown on author page)"
-                  />
-                  <p
-                    className="text-xs mt-1 text-right"
-                    style={{ color: 'rgba(90,127,160,0.50)', fontFamily: '"Source Code Pro", monospace' }}
-                  >
-                    {form.bio.length} chars
-                  </p>
-                </div>
-                <div>
-                  <label style={labelStyle}>Short Bio <span style={{ color: 'rgba(138,175,200,0.45)', fontWeight: 400 }}>(for press kits)</span></label>
-                  <textarea
-                    value={form.shortBio}
-                    onChange={e => setForm(f => ({ ...f, shortBio: e.target.value }))}
-                    style={{
-                      ...textareaStyle,
-                      minHeight: '4rem',
-                      borderColor: focusedField === 'shortBio' ? 'rgba(212,175,55,0.60)' : 'rgba(61,96,128,0.40)',
-                      boxShadow: focusedField === 'shortBio' ? '0 0 0 3px rgba(201,162,39,0.12)' : 'none',
-                    }}
-                    onFocus={() => setFocusedField('shortBio')}
-                    onBlur={() => setFocusedField(null)}
-                    placeholder="1–2 sentence bio for marketing materials"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Social & Web */}
-            <div style={cardStyle}>
-              <div className="flex items-center gap-2 mb-4">
-                <GlobeAltIcon className="w-4 h-4" style={{ color: '#8aafc8' }} />
-                <h3
-                  className="text-sm font-bold"
-                  style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
-                >
-                  Web & Social
-                </h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {SOCIAL_PLATFORMS.map(platform => (
-                  <div key={platform.key}>
-                    <label style={labelStyle}>{platform.label}</label>
-                    <input
-                      value={(form as Record<string, string>)[platform.key] || ''}
-                      onChange={e => setForm(f => ({ ...f, [platform.key]: e.target.value }))}
-                      style={getFocusStyle(platform.key)}
-                      onFocus={() => setFocusedField(platform.key)}
-                      onBlur={() => setFocusedField(null)}
-                      placeholder={platform.placeholder}
-                    />
-                  </div>
+            {/* Name + info */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold text-gold-400 font-playfair">{author.name}</h1>
+              {author.penName && (
+                <p className="text-tan-400 text-sm mt-0.5">Writing as <span className="font-medium">{author.penName}</span></p>
+              )}
+              {author.tagline && (
+                <p className="text-navy-200 text-sm mt-1 italic">{author.tagline}</p>
+              )}
+              <div className="flex flex-wrap gap-2 mt-2">
+                {author.genres.map(g => (
+                  <span key={g} className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gold-600/15 border border-gold-500/30 text-gold-300">
+                    {g}
+                  </span>
                 ))}
+                {author.location && (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs text-navy-300 bg-navy-700/60 border border-navy-600">
+                    {author.location}
+                  </span>
+                )}
               </div>
             </div>
 
             {/* Save button */}
-            <div className="flex justify-end">
+            <div className="flex items-center gap-3">
+              {savedMsg && <span className="text-gold-400 text-sm font-medium">{savedMsg}</span>}
               <button
-                onClick={handleSave}
+                onClick={handleSaveProfile}
                 disabled={isSaving}
-                className="flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-60"
-                style={{
-                  background: 'linear-gradient(135deg, #c9a227 0%, #d4af37 50%, #c9a227 100%)',
-                  color: '#0a1628',
-                  boxShadow: '0 2px 12px rgba(212,175,55,0.35)',
-                  fontFamily: 'Inter, sans-serif',
-                }}
+                className="bg-gradient-to-r from-gold-600 to-gold-500 text-navy-900 font-semibold hover:from-gold-500 hover:to-gold-400 rounded-xl px-5 py-2 text-sm transition-all disabled:opacity-60 flex items-center gap-2"
               >
-                {isSaving ? 'Saving…' : 'Save Profile'}
+                {isSaving ? <><div className="w-4 h-4 rounded-full border-2 border-navy-900/30 border-t-navy-900 animate-spin" /> Saving…</> : 'Save Profile'}
               </button>
             </div>
           </div>
         </div>
-      ) : (
-        /* Public profile preview */
-        <div className="max-w-2xl mx-auto">
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{
-              background: 'linear-gradient(145deg, #1a2d4e 0%, #0f2040 100%)',
-              border: '1px solid rgba(212,175,55,0.18)',
-              boxShadow: '0 4px 24px rgba(5,13,26,0.40)',
-            }}
-          >
-            {/* Hero banner */}
-            <div
-              className="h-28 relative"
-              style={{ background: 'linear-gradient(135deg, #0a1628 0%, #1a2d4e 50%, #243b55 100%)' }}
-            >
-              <div
-                className="absolute inset-0"
-                style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(212,175,55,0.12) 0%, transparent 70%)' }}
-              />
+
+        {/* ── Two-column: sidebar + main ───────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5">
+
+          {/* ── Sidebar ────────────────────────────────────────────── */}
+          <div className="space-y-4">
+
+            {/* Quick stats */}
+            <div style={cardStyle} className="p-4">
+              <h3 className="text-gold-400 font-semibold text-xs uppercase tracking-wider mb-3">Quick Stats</h3>
+              <div className="space-y-3">
+                {QUICK_STATS.map(stat => {
+                  const Icon = stat.icon;
+                  return (
+                    <div key={stat.label} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: stat.color + '18', border: `1px solid ${stat.color}33` }}>
+                        <Icon className="w-4 h-4" style={{ color: stat.color }} />
+                      </div>
+                      <div>
+                        <p className="text-navy-100 font-bold text-sm leading-none">{stat.value}</p>
+                        <p className="text-navy-400 text-xs mt-0.5">{stat.label}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Profile section */}
-            <div className="px-6 pb-6 relative" style={{ marginTop: '-3rem' }}>
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mb-3 ring-4"
-                style={{
-                  background: 'linear-gradient(135deg, #c9a227 0%, #d4af37 60%, #c4a882 100%)',
-                  color: '#0a1628',
-                  fontFamily: '"Playfair Display", Georgia, serif',
-                  boxShadow: '0 4px 16px rgba(212,175,55,0.25)',
-                  ringColor: '#0f2040',
-                }}
-              >
-                {(form.displayName || 'A').charAt(0).toUpperCase()}
-              </div>
-
-              <h2
-                className="text-2xl font-bold mb-0.5"
-                style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
-              >
-                {form.displayName}
-              </h2>
-              {form.penName && (
-                <p className="text-sm mb-2" style={{ color: 'rgba(138,175,200,0.60)', fontFamily: 'Inter, sans-serif' }}>
-                  also writes as {form.penName}
-                </p>
-              )}
-
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                {form.genres.map(g => (
-                  <span
-                    key={g}
-                    className="text-xs px-2.5 py-0.5 rounded-full"
-                    style={{
-                      background: 'rgba(212,175,55,0.10)',
-                      color: '#d4af37',
-                      border: '1px solid rgba(212,175,55,0.25)',
-                      fontFamily: 'Inter, sans-serif',
-                    }}
-                  >
-                    {g}
-                  </span>
-                ))}
-              </div>
-
-              <p
-                className="text-sm leading-relaxed mb-5"
-                style={{ color: 'rgba(197,216,232,0.75)', fontFamily: 'Inter, sans-serif' }}
-              >
-                {form.bio}
-              </p>
-
-              {/* Social links */}
-              <div className="flex flex-wrap gap-3 mb-6">
-                {[
-                  { href: form.website, label: 'Website' },
-                  { href: form.twitter ? `https://x.com/${form.twitter.replace('@', '')}` : '', label: form.twitter || '' },
-                  { href: form.goodreads, label: 'Goodreads' },
-                ]
-                  .filter(l => l.href && l.label)
-                  .map(l => (
+            {/* Social links */}
+            <div style={cardStyle} className="p-4">
+              <h3 className="text-gold-400 font-semibold text-xs uppercase tracking-wider mb-3">Social Links</h3>
+              <div className="space-y-2">
+                {SOCIAL_LINKS.map(link => {
+                  const Icon = link.icon;
+                  return (
                     <a
-                      key={l.label}
-                      href={l.href}
+                      key={link.label}
+                      href={link.href ?? '#'}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs font-medium transition-colors"
-                      style={{ color: '#8aafc8', fontFamily: 'Inter, sans-serif' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#d4af37'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#8aafc8'; }}
+                      className="flex items-center gap-2.5 text-sm text-navy-200 hover:text-gold-400 transition-colors group"
                     >
-                      {l.label} ↗
+                      <Icon className="w-4 h-4 text-navy-400 group-hover:text-gold-400 transition-colors shrink-0" />
+                      <span className="truncate">{link.value ?? '—'}</span>
                     </a>
-                  ))}
+                  );
+                })}
               </div>
+            </div>
 
-              {/* Published books */}
-              {publishedTitles.length > 0 && (
-                <div>
-                  <h3
-                    className="text-sm font-bold mb-3"
-                    style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
-                  >
-                    Published Books
-                  </h3>
-                  <div className="space-y-2.5">
-                    {publishedTitles.map(t => (
-                      <div
-                        key={t.id}
-                        className="flex items-center gap-3 p-3 rounded-xl"
-                        style={{
-                          background: 'rgba(10,22,40,0.40)',
-                          border: '1px solid rgba(61,96,128,0.20)',
-                        }}
-                      >
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{
-                            background: 'rgba(212,175,55,0.10)',
-                            border: '1px solid rgba(212,175,55,0.22)',
-                          }}
-                        >
-                          <BookOpenIcon className="w-4 h-4" style={{ color: '#d4af37' }} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className="text-sm font-semibold truncate"
-                            style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#c5d8e8' }}
-                          >
-                            {t.title}
-                          </p>
-                          {t.publicationDate && (
-                            <p
-                              className="text-xs"
-                              style={{ color: 'rgba(90,127,160,0.60)', fontFamily: '"Source Code Pro", monospace' }}
-                            >
-                              {t.publicationDate}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            {/* Photo upload drop area */}
+            <div
+              style={cardStyle}
+              className="p-4 border-dashed flex flex-col items-center gap-2 cursor-pointer hover:border-gold-500/40 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <PhotoIcon className="w-8 h-8 text-navy-400" />
+              <p className="text-navy-300 text-xs text-center">Drag & drop author photo or click to upload</p>
+              <p className="text-navy-500 text-xs">JPG, PNG · max 10 MB</p>
             </div>
           </div>
 
-          <p
-            className="text-center text-xs mt-3"
-            style={{ color: 'rgba(90,127,160,0.45)', fontFamily: 'Inter, sans-serif' }}
-          >
-            This is how your public author page appears to readers and press.
-          </p>
+          {/* ── Main content ────────────────────────────────────────── */}
+          <div className="space-y-4">
+
+            {/* Tabs */}
+            <div className="flex gap-1 overflow-x-auto pb-1">
+              {TABS.map(tab => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={clsx(
+                      'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all border',
+                      activeTab === tab.id
+                        ? 'bg-gold-600/15 border-gold-500/50 text-gold-400'
+                        : 'bg-navy-700/40 border-navy-600 text-navy-300 hover:border-navy-500 hover:text-navy-100'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* ── About tab ────────────────────────────────────────── */}
+            {activeTab === 'about' && (
+              <div style={cardStyle} className="p-5 space-y-5">
+                <h2 className="text-gold-400 font-semibold text-sm">Author Bio</h2>
+
+                {/* Bio variant switcher */}
+                <div className="flex gap-2">
+                  {(['short', 'medium', 'full'] as BioVariant[]).map(v => (
+                    <button
+                      key={v}
+                      onClick={() => setBioVariant(v)}
+                      className={clsx(
+                        'px-3 py-1.5 rounded-xl text-xs font-medium border transition-all capitalize',
+                        bioVariant === v
+                          ? 'border-gold-500 bg-gold-600/10 text-gold-400'
+                          : 'border-navy-600 bg-navy-800/40 text-navy-300 hover:border-navy-500'
+                      )}
+                    >
+                      {v} {v === 'short' ? '(50w)' : v === 'medium' ? '(150w)' : '(Full)'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Bio textarea */}
+                <div className="space-y-1">
+                  <textarea
+                    rows={bioVariant === 'full' ? 8 : bioVariant === 'medium' ? 5 : 3}
+                    value={bioEdits[bioVariant]}
+                    onChange={e => setBioEdits(prev => ({ ...prev, [bioVariant]: e.target.value }))}
+                    className="w-full bg-navy-800/60 border border-navy-500 text-white placeholder-navy-300 focus:border-gold-500 rounded-xl px-4 py-3 text-sm outline-none transition-colors resize-none leading-relaxed"
+                  />
+                  <div className="flex justify-between text-xs text-navy-400">
+                    <span>{bioEdits[bioVariant].length} characters</span>
+                    <span>{wordCount(bioEdits[bioVariant])} words</span>
+                  </div>
+                </div>
+
+                {/* Profile fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-navy-600 pt-4">
+                  {[
+                    { label: 'Full Name',  key: 'name',      value: author.name },
+                    { label: 'Pen Name',   key: 'penName',   value: author.penName ?? '' },
+                    { label: 'Tagline',    key: 'tagline',   value: author.tagline ?? '' },
+                    { label: 'Location',   key: 'location',  value: author.location ?? '' },
+                    { label: 'Website',    key: 'website',   value: author.website ?? '' },
+                    { label: 'Twitter/X',  key: 'twitter',   value: author.twitter ?? '' },
+                    { label: 'Instagram',  key: 'instagram', value: author.instagram ?? '' },
+                    { label: 'Goodreads',  key: 'goodreads', value: author.goodreads ?? '' },
+                  ].map(field => (
+                    <div key={field.key} className="space-y-1">
+                      <label className="text-navy-300 text-xs font-medium">{field.label}</label>
+                      <input
+                        defaultValue={field.value}
+                        className="w-full bg-navy-800/60 border border-navy-500 text-white placeholder-navy-300 focus:border-gold-500 rounded-xl px-3 py-2 text-sm outline-none transition-colors"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Portfolio tab ─────────────────────────────────────── */}
+            {activeTab === 'portfolio' && (
+              <div style={cardStyle} className="p-5">
+                <h2 className="text-gold-400 font-semibold text-sm mb-4">Published Works</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {MOCK_TITLES.filter(t => t.status === 'published').map(title => (
+                    <div key={title.id} className="bg-navy-800/40 border border-navy-600/60 rounded-xl p-4 hover:border-navy-500 transition-colors">
+                      {/* Cover placeholder */}
+                      <div
+                        className="w-full aspect-[3/4] rounded-lg mb-3 flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, #1a2d4e, #0a1628)', border: '1px solid rgba(201,162,39,0.15)' }}
+                      >
+                        <BookOpenIcon className="w-10 h-10 text-gold-600/40" />
+                      </div>
+                      <p className="text-navy-100 font-semibold text-sm leading-tight">{title.title}</p>
+                      {title.publicationDate && (
+                        <p className="text-navy-400 text-xs mt-1">{new Date(title.publicationDate).getFullYear()}</p>
+                      )}
+                      {title.genre && (
+                        <span className="mt-2 inline-block px-2 py-0.5 rounded-full text-xs bg-gold-600/10 border border-gold-500/25 text-gold-400">
+                          {title.genre}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Awards tab ────────────────────────────────────────── */}
+            {activeTab === 'awards' && (
+              <div style={cardStyle} className="p-5">
+                <h2 className="text-gold-400 font-semibold text-sm mb-4">Awards &amp; Recognition</h2>
+                <div className="space-y-3">
+                  {author.awards.map((award, i) => (
+                    <div key={i} className="flex items-start gap-4 bg-navy-800/40 border border-navy-600/60 rounded-xl p-4">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm font-playfair"
+                        style={{ background: 'rgba(201,162,39,0.12)', border: '1px solid rgba(201,162,39,0.30)', color: '#c9a227' }}
+                      >
+                        {award.year}
+                      </div>
+                      <div>
+                        <p className="text-navy-100 font-semibold text-sm">{award.award}</p>
+                        <p className="text-tan-400 text-xs mt-0.5 italic">{award.book}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Media Kit tab ─────────────────────────────────────── */}
+            {activeTab === 'mediakit' && (
+              <div style={cardStyle} className="p-5">
+                <h2 className="text-gold-400 font-semibold text-sm mb-4">Media Kit Downloads</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { label: 'Author Photo (Hi-Res)', desc: 'TIFF · 300 DPI · 3000×3000px', type: 'author-photo.tiff' },
+                    { label: 'Author Bio (PDF)',       desc: 'All bio lengths, formatted',    type: 'author-bio.pdf'  },
+                    { label: 'Author Page Tearsheet',  desc: 'One-page press kit PDF',        type: 'press-kit.pdf'   },
+                    { label: 'Book Covers (ZIP)',       desc: 'All published titles, hi-res',  type: 'covers.zip'      },
+                  ].map(item => (
+                    <button
+                      key={item.type}
+                      onClick={() => handleDownload(item.label)}
+                      className="flex items-center gap-4 bg-navy-800/40 border border-navy-600/60 rounded-xl p-4 text-left hover:border-gold-500/40 transition-all group"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ background: 'rgba(201,162,39,0.10)', border: '1px solid rgba(201,162,39,0.25)' }}
+                      >
+                        <ArrowDownTrayIcon className="w-5 h-5 text-gold-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-navy-100 text-sm font-medium group-hover:text-gold-400 transition-colors">{item.label}</p>
+                        <p className="text-navy-400 text-xs mt-0.5">{item.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </Layout>
   );
 };
