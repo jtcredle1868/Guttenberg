@@ -5,45 +5,63 @@ import { ReadinessScore } from '../components/ui/ReadinessScore';
 import { Title, FormatType } from '../api/types';
 import { MOCK_TITLES } from '../mockData';
 import { useNavigate } from 'react-router-dom';
-import clsx from 'clsx';
 import {
   PlusIcon, MagnifyingGlassIcon, Squares2X2Icon, ListBulletIcon,
   BookOpenIcon,
 } from '@heroicons/react/24/outline';
+import clsx from 'clsx';
 
 const statusTabs: { id: string; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'draft', label: 'Draft' },
+  { id: 'all',           label: 'All' },
+  { id: 'draft',         label: 'Draft' },
   { id: 'in-production', label: 'In Production' },
-  { id: 'published', label: 'Published' },
-  { id: 'archived', label: 'Archived' },
+  { id: 'published',     label: 'Published' },
+  { id: 'archived',      label: 'Archived' },
 ];
 
 const formatIcons: Record<FormatType, string> = {
   print: '📚', ebook: '📱', audiobook: '🎧',
 };
 
-const CoverPlaceholder = ({ title, color }: { title: string; color: string }) => (
-  <div className={clsx('w-full h-full flex flex-col items-center justify-center text-white p-3 rounded-t-xl', color)}>
-    <BookOpenIcon className="w-8 h-8 mb-2 opacity-70" />
-    <p className="text-xs font-semibold text-center leading-tight line-clamp-3">{title}</p>
+const coverGradients = [
+  'linear-gradient(135deg, #1a2d4e 0%, #0f2040 100%)',
+  'linear-gradient(135deg, #243b55 0%, #1a2d4e 100%)',
+  'linear-gradient(135deg, #2e4a6b 0%, #1a2d4e 100%)',
+  'linear-gradient(135deg, #3d6080 0%, #243b55 100%)',
+  'linear-gradient(135deg, #1a2d4e 0%, #050d1a 100%)',
+];
+
+const CoverPlaceholder = ({ title, gradientIdx }: { title: string; gradientIdx: number }) => (
+  <div
+    className="w-full h-full flex flex-col items-center justify-center p-3 rounded-t-2xl relative overflow-hidden"
+    style={{ background: coverGradients[gradientIdx % coverGradients.length] }}
+  >
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 30%, rgba(212,175,55,0.10) 0%, transparent 70%)' }}
+    />
+    <div
+      className="w-10 h-10 rounded-xl flex items-center justify-center mb-2 relative z-10"
+      style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.25)' }}
+    >
+      <BookOpenIcon className="w-5 h-5" style={{ color: 'rgba(212,175,55,0.80)' }} />
+    </div>
+    <p
+      className="text-xs font-semibold text-center leading-tight line-clamp-3 relative z-10"
+      style={{ color: 'rgba(197,216,232,0.85)', fontFamily: '"Playfair Display", Georgia, serif' }}
+    >
+      {title}
+    </p>
   </div>
 );
 
-const coverColors = [
-  'bg-gradient-to-br from-primary-600 to-primary-800',
-  'bg-gradient-to-br from-accent-600 to-accent-800',
-  'bg-gradient-to-br from-green-600 to-green-800',
-  'bg-gradient-to-br from-amber-600 to-amber-800',
-  'bg-gradient-to-br from-rose-600 to-rose-800',
-];
-
 export const TitlesPage = () => {
-  const [titles, setTitles] = useState<Title[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [titles, setTitles]       = useState<Title[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [search, setSearch]       = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode]   = useState<'grid' | 'list'>('grid');
+  const [searchFocused, setSearchFocused] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,54 +77,116 @@ export const TitlesPage = () => {
 
   return (
     <Layout title="My Titles" breadcrumbs={[{ label: 'My Titles' }]}>
+
       {/* Toolbar */}
-      <div className="flex items-center justify-between mb-6 gap-4">
+      <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
         <div className="relative flex-1 max-w-xs">
-          <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <MagnifyingGlassIcon
+            className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors"
+            style={{ color: searchFocused ? '#d4af37' : 'rgba(90,127,160,0.55)' }}
+          />
           <input
-            value={search} onChange={e => setSearch(e.target.value)}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
             placeholder="Search titles…"
-            className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm transition-all duration-150"
+            style={{
+              background: 'rgba(10,22,40,0.70)',
+              border: searchFocused ? '1px solid rgba(212,175,55,0.55)' : '1px solid rgba(61,96,128,0.32)',
+              color: '#c5d8e8',
+              outline: 'none',
+              fontFamily: 'Inter, sans-serif',
+              boxShadow: searchFocused ? '0 0 0 3px rgba(201,162,39,0.12)' : 'none',
+            }}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
           />
         </div>
+
         <div className="flex items-center gap-2">
-          <button onClick={() => setViewMode('grid')} className={clsx('p-2 rounded-lg', viewMode === 'grid' ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:text-gray-600')}>
-            <Squares2X2Icon className="w-5 h-5" />
-          </button>
-          <button onClick={() => setViewMode('list')} className={clsx('p-2 rounded-lg', viewMode === 'list' ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:text-gray-600')}>
-            <ListBulletIcon className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => navigate('/titles/new')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700 transition-colors"
-          >
-            <PlusIcon className="w-4 h-4" /> New Title
+          {/* View mode toggles */}
+          {([['grid', Squares2X2Icon], ['list', ListBulletIcon]] as const).map(([mode, Icon]) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={clsx(
+                'p-2 rounded-lg transition-all duration-150',
+                viewMode === mode
+                  ? 'bg-gold-500/10 border border-gold-500/30 text-gold-500'
+                  : 'border border-navy-500/40 text-navy-300/60 hover:border-navy-400/60 hover:text-navy-200',
+              )}
+              aria-label={`${mode} view`}
+            >
+              <Icon className="w-5 h-5" />
+            </button>
+          ))}
+
+          <button onClick={() => navigate('/titles/new')} className="btn-gold">
+            <PlusIcon className="w-4 h-4" />
+            New Title
           </button>
         </div>
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
-        {statusTabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={clsx(
-              'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors',
-              activeTab === tab.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            )}
-          >
-            {tab.label}
-            <span className="ml-1.5 text-xs text-gray-400">
-              ({tab.id === 'all' ? titles.length : titles.filter(t => t.status === tab.id).length})
-            </span>
-          </button>
-        ))}
+      <div className="flex gap-0.5 mb-5 p-1 rounded-xl w-fit bg-navy-900/60 border border-navy-600/25">
+        {statusTabs.map(tab => {
+          const isActive = activeTab === tab.id;
+          const count    = tab.id === 'all' ? titles.length : titles.filter(t => t.status === tab.id).length;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={clsx(
+                'px-3.5 py-1.5 text-sm font-medium rounded-lg transition-all duration-150 font-inter',
+                isActive
+                  ? 'bg-gradient-to-br from-navy-700 to-navy-600 border border-gold-500/25 text-gold-500'
+                  : 'text-navy-200/60 hover:text-navy-100 hover:bg-navy-600/15 border border-transparent',
+              )}
+            >
+              {tab.label}
+              <span
+                className={clsx('ml-1.5 text-xs font-mono', isActive ? 'text-gold-500/65' : 'text-navy-300/45')}
+              >
+                ({count})
+              </span>
+            </button>
+          );
+        })}
       </div>
 
+      {/* Empty state */}
+      {!loading && filtered.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div
+            className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5"
+            style={{ background: 'linear-gradient(135deg, rgba(212,175,55,0.10) 0%, rgba(10,22,40,0.60) 100%)', border: '1px solid rgba(212,175,55,0.18)' }}
+          >
+            <BookOpenIcon className="w-9 h-9" style={{ color: 'rgba(212,175,55,0.60)' }} />
+          </div>
+          <h3
+            className="text-xl font-bold mb-2"
+            style={{ color: '#e0c060', fontFamily: '"Playfair Display", Georgia, serif' }}
+          >
+            Your library awaits
+          </h3>
+          <p className="text-sm mb-6" style={{ color: 'rgba(138,175,200,0.60)', fontFamily: 'Inter, sans-serif' }}>
+            {search || activeTab !== 'all'
+              ? 'No titles match your current filters.'
+              : 'Begin your publishing journey by creating your first title.'}
+          </p>
+          {!search && activeTab === 'all' && (
+            <button onClick={() => navigate('/titles/new')} className="btn-gold">
+              <PlusIcon className="w-4 h-4" />
+              Create First Title
+            </button>
+          )}
+        </div>
+      )}
+
       {loading ? (
-        <div className={clsx('grid gap-4', viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid-cols-1')}>
-          {[...Array(5)].map((_, i) => <div key={i} className="h-64 bg-gray-200 animate-pulse rounded-2xl" />)}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, i) => <div key={i} className="h-64 rounded-2xl skeleton" />)}
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -114,18 +194,40 @@ export const TitlesPage = () => {
             <div
               key={title.id}
               onClick={() => navigate(`/titles/${title.id}`)}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary-200 transition-all cursor-pointer group"
+              className="rounded-2xl cursor-pointer transition-all duration-200 overflow-hidden group"
+              style={{
+                background: 'linear-gradient(145deg, #1a2d4e 0%, #0f2040 100%)',
+                border: '1px solid rgba(61,96,128,0.22)',
+                boxShadow: '0 1px 4px rgba(5,13,26,0.40)',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(212,175,55,0.35)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 28px rgba(5,13,26,0.50), 0 0 0 1px rgba(212,175,55,0.08)';
+                (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(61,96,128,0.22)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(5,13,26,0.40)';
+                (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+              }}
             >
-              <div className="h-44 rounded-t-2xl overflow-hidden">
+              <div className="h-44 overflow-hidden">
                 {title.coverUrl ? (
                   <img src={title.coverUrl} alt={title.title} className="w-full h-full object-cover" />
                 ) : (
-                  <CoverPlaceholder title={title.title} color={coverColors[i % coverColors.length]} />
+                  <CoverPlaceholder title={title.title} gradientIdx={i} />
                 )}
               </div>
               <div className="p-3">
-                <p className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 mb-1">{title.title}</p>
-                <p className="text-xs text-gray-500 mb-2">{title.authorName}</p>
+                <p
+                  className="font-semibold text-sm leading-tight line-clamp-2 mb-1"
+                  style={{ color: '#e0c060', fontFamily: '"Playfair Display", Georgia, serif' }}
+                >
+                  {title.title}
+                </p>
+                <p className="text-xs mb-2" style={{ color: '#c4a882', fontFamily: 'Inter, sans-serif' }}>
+                  {title.authorName}
+                </p>
                 <div className="flex items-center justify-between">
                   <StatusBadge status={title.status} />
                   <ReadinessScore score={title.readinessScore} size="sm" />
@@ -142,25 +244,65 @@ export const TitlesPage = () => {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        /* List / table mode */
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{
+            background: 'linear-gradient(145deg, #1a2d4e 0%, #0f2040 100%)',
+            border: '1px solid rgba(61,96,128,0.22)',
+          }}
+        >
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
+            <thead>
+              <tr style={{ background: 'rgba(5,13,26,0.55)', borderBottom: '1px solid rgba(61,96,128,0.20)' }}>
                 {['Title', 'Author', 'Status', 'Formats', 'Channels', 'Readiness', ''].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{h}</th>
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                    style={{ color: 'rgba(90,127,160,0.65)', letterSpacing: '0.06em', fontFamily: 'Inter, sans-serif' }}
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filtered.map(t => (
-                <tr key={t.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/titles/${t.id}`)}>
-                  <td className="px-4 py-3 font-medium text-gray-900">{t.title}</td>
-                  <td className="px-4 py-3 text-gray-500">{t.authorName}</td>
+            <tbody>
+              {filtered.map((t, idx) => (
+                <tr
+                  key={t.id}
+                  className="cursor-pointer transition-colors duration-100"
+                  style={{
+                    borderBottom: '1px solid rgba(61,96,128,0.12)',
+                    background: idx % 2 === 0 ? 'transparent' : 'rgba(15,32,64,0.30)',
+                  }}
+                  onClick={() => navigate(`/titles/${t.id}`)}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,175,55,0.05)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(15,32,64,0.30)')}
+                >
+                  <td
+                    className="px-4 py-3 font-semibold"
+                    style={{ color: '#e0c060', fontFamily: '"Playfair Display", Georgia, serif' }}
+                  >
+                    {t.title}
+                  </td>
+                  <td className="px-4 py-3" style={{ color: '#c4a882', fontFamily: 'Inter, sans-serif' }}>
+                    {t.authorName}
+                  </td>
                   <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
-                  <td className="px-4 py-3">{t.formats.map(f => formatIcons[f.type]).join(' ')}</td>
-                  <td className="px-4 py-3 text-gray-600">{t.channels.filter(c => c.status === 'live').length} live</td>
+                  <td className="px-4 py-3 text-base">{t.formats.map(f => formatIcons[f.type]).join(' ')}</td>
+                  <td
+                    className="px-4 py-3"
+                    style={{ color: 'rgba(138,175,200,0.70)', fontFamily: '"Source Code Pro", monospace' }}
+                  >
+                    {t.channels.filter(c => c.status === 'live').length} live
+                  </td>
                   <td className="px-4 py-3"><ReadinessScore score={t.readinessScore} size="sm" /></td>
-                  <td className="px-4 py-3 text-primary-600 text-xs font-medium">Manage →</td>
+                  <td
+                    className="px-4 py-3 text-xs font-semibold"
+                    style={{ color: '#c9a227' }}
+                  >
+                    Manage →
+                  </td>
                 </tr>
               ))}
             </tbody>

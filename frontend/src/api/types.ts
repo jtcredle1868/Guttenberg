@@ -165,3 +165,92 @@ export interface ArcCampaign {
   reviewsReceived: number;
   status: 'active' | 'expired' | 'cancelled';
 }
+
+// Cover Design Types
+export interface CoverTemplate {
+  id: string;
+  name: string;
+  genre: string;
+  style: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  fontHeading: string;
+  fontBody: string;
+  previewGradient: string;
+}
+
+export interface CoverDesign {
+  titleId: string;
+  templateId?: string;
+  titleText: string;
+  authorText: string;
+  subtitle?: string;
+  paletteId?: string;
+  customizations: Record<string, unknown>;
+  lastModified: string;
+}
+
+// Format Export Types
+export interface ExportJob {
+  id: string;
+  titleId: string;
+  format: 'pdf-print' | 'epub3' | 'mobi' | 'docx' | 'html5';
+  status: 'queued' | 'processing' | 'complete' | 'failed';
+  progress: number;
+  createdAt: string;
+  completedAt?: string;
+  fileUrl?: string;
+  trimSize?: string;
+  templateId?: string;
+  estimatedCost?: number;
+}
+
+export interface TrimSize {
+  id: string;
+  label: string;
+  dimensions: string;
+  costPerPage: number;
+  setupCost: number;
+  popular?: boolean;
+}
+
+// Pricing Types
+export interface ChannelRoyalty {
+  channel: string;
+  displayName: string;
+  royaltyRate: number;
+  royaltyAmount: number;
+  deliveryFee?: number;
+  net: number;
+}
+
+export interface PricingAnalysis {
+  listPrice: number;
+  channelRoyalties: ChannelRoyalty[];
+  printCost?: number;
+  breakEvenUnits: number;
+  recommendedPrice: number;
+  competitiveRange: { min: number; max: number };
+}
+
+// Author Profile Types
+export interface AuthorProfile {
+  id: string;
+  name: string;
+  penName?: string;
+  tagline?: string;
+  genres: string[];
+  location?: string;
+  website?: string;
+  twitter?: string;
+  instagram?: string;
+  goodreads?: string;
+  totalTitles: number;
+  totalSales: number;
+  countriesReached: number;
+  reviews: number;
+  bio: { short: string; medium: string; full: string };
+  awards: { year: number; award: string; book: string }[];
+  avatarUrl?: string;
+}

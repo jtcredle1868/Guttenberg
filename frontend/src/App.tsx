@@ -17,6 +17,10 @@ const FinancePage      = lazy(() => import('./pages/FinancePage').then(m => ({ d
 const MarketingPage    = lazy(() => import('./pages/MarketingPage').then(m => ({ default: m.MarketingPage })));
 const CatalogPage      = lazy(() => import('./pages/CatalogPage').then(m => ({ default: m.CatalogPage })));
 const SettingsPage     = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const CoverDesignerPage = lazy(() => import('./pages/CoverDesignerPage').then(m => ({ default: m.CoverDesignerPage })));
+const FormatExportPage  = lazy(() => import('./pages/FormatExportPage').then(m => ({ default: m.FormatExportPage })));
+const PricingPage       = lazy(() => import('./pages/PricingPage').then(m => ({ default: m.PricingPage })));
+const AuthorProfilePage = lazy(() => import('./pages/AuthorProfilePage').then(m => ({ default: m.AuthorProfilePage })));
 
 /* ── Branded loading spinner ── */
 const PageLoader = () => (
@@ -93,6 +97,12 @@ const App = () => (
             {/* Protected — Platform */}
             <Route path="/catalog"      element={<ProtectedRoute><CatalogPage /></ProtectedRoute>} />
             <Route path="/settings"     element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+
+            {/* Protected — Creative Tools */}
+            <Route path="/cover-designer"  element={<ProtectedRoute><CoverDesignerPage /></ProtectedRoute>} />
+            <Route path="/format-export"   element={<ProtectedRoute><FormatExportPage /></ProtectedRoute>} />
+            <Route path="/pricing"         element={<ProtectedRoute><PricingPage /></ProtectedRoute>} />
+            <Route path="/author-profile"  element={<ProtectedRoute><AuthorProfilePage /></ProtectedRoute>} />
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
