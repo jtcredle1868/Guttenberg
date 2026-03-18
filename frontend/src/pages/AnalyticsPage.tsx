@@ -95,11 +95,7 @@ export const AnalyticsPage = () => {
       {/* Key Metrics */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
         {metrics.map(m => (
-          <div
-            key={m.label}
-            className="rounded-2xl p-5"
-            style={cardStyle}
-          >
+          <div key={m.label} className="rounded-2xl p-5" style={cardStyle}>
             <p
               className="text-xs font-bold uppercase tracking-wider"
               style={{ color: 'rgba(90,127,160,0.70)', letterSpacing: '0.06em', fontFamily: 'Inter, sans-serif' }}

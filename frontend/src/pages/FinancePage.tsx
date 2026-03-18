@@ -4,13 +4,15 @@ import { RoyaltyCalculator } from '../components/ui/RoyaltyCalculator';
 import { DataTable, Column } from '../components/ui/DataTable';
 import { MOCK_DISBURSEMENTS, MOCK_SALES } from '../mockData';
 import { Disbursement, SalesRecord } from '../api/types';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 const cardStyle: React.CSSProperties = {
-  background: 'linear-gradient(145deg, #1a2d4e 0%, #0f2040 100%)',
+  background: 'linear-gradient(145deg, rgba(26,45,78,0.80) 0%, rgba(15,32,64,0.80) 100%)',
   border: '1px solid rgba(61,96,128,0.22)',
   boxShadow: '0 1px 3px rgba(5,13,26,0.35)',
   borderRadius: '1rem',
   padding: '1.5rem',
+  backdropFilter: 'blur(8px)',
 };
 
 export const FinancePage = () => {
@@ -83,10 +85,10 @@ export const FinancePage = () => {
   ];
 
   const earningsCards = [
-    { label: 'This Month', value: `$${earnings.thisMonth.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, trend: '-8.2% vs last month', positive: false },
-    { label: 'Last Month', value: `$${earnings.lastMonth.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, trend: '', positive: null },
-    { label: 'Year to Date', value: `$${earnings.ytd.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, trend: '+24.6% vs last year', positive: true },
-    { label: 'All-Time', value: `$${earnings.allTime.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, trend: '', positive: null },
+    { label: 'This Month',   value: `$${earnings.thisMonth.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, trend: '-8.2% vs last month',   positive: false },
+    { label: 'Last Month',   value: `$${earnings.lastMonth.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, trend: '',                       positive: null  },
+    { label: 'Year to Date', value: `$${earnings.ytd.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,       trend: '+24.6% vs last year',    positive: true  },
+    { label: 'All-Time',     value: `$${earnings.allTime.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,   trend: '',                       positive: null  },
   ];
 
   const formatRevenue = [
@@ -110,16 +112,16 @@ export const FinancePage = () => {
             </p>
             <p
               className="text-2xl font-bold mt-1"
-              style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e8f1f8' }}
+              style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#d4af37' }}
             >
               {c.value}
             </p>
             {c.trend && (
               <p
                 className="text-xs font-semibold mt-1"
-                style={{ color: c.positive ? '#34d399' : '#f87171' }}
+                style={{ color: c.positive ? '#34d399' : '#f87171', fontFamily: 'Inter, sans-serif' }}
               >
-                {c.trend}
+                {c.positive ? '▲' : '▼'} {c.trend}
               </p>
             )}
           </div>
@@ -134,8 +136,8 @@ export const FinancePage = () => {
         {/* Revenue by format */}
         <div className="xl:col-span-2" style={cardStyle}>
           <h3
-            className="text-base font-bold text-white mb-5"
-            style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+            className="text-base font-bold mb-5"
+            style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
           >
             Revenue by Format
           </h3>
@@ -143,7 +145,7 @@ export const FinancePage = () => {
             {formatRevenue.map(r => (
               <div key={r.format}>
                 <div className="flex items-center justify-between mb-2 text-sm">
-                  <span className="font-semibold" style={{ color: '#c5d8e8' }}>{r.format}</span>
+                  <span className="font-semibold" style={{ color: '#c5d8e8', fontFamily: 'Inter, sans-serif' }}>{r.format}</span>
                   <div className="flex gap-4">
                     <span style={{ color: 'rgba(138,175,200,0.65)', fontFamily: '"Source Code Pro", monospace', fontSize: '0.75rem' }}>
                       {r.units.toLocaleString()} units
@@ -157,15 +159,15 @@ export const FinancePage = () => {
                   </div>
                 </div>
                 <div
-                  className="h-2 rounded-full"
-                  style={{ background: 'rgba(26,45,78,0.80)', border: '1px solid rgba(61,96,128,0.15)' }}
+                  className="h-2 rounded-full overflow-hidden"
+                  style={{ background: 'rgba(10,22,40,0.80)', border: '1px solid rgba(61,96,128,0.15)' }}
                 >
                   <div
-                    className="h-2 rounded-full transition-all duration-500"
+                    className="h-2 rounded-full transition-all duration-700"
                     style={{
                       width: `${r.pct}%`,
-                      background: 'linear-gradient(90deg, #c9a227 0%, #edc74a 50%, #d4af37 100%)',
-                      boxShadow: '0 0 6px rgba(212,175,55,0.30)',
+                      background: 'linear-gradient(90deg, #c9a227 0%, #eacf7a 50%, #d4af37 100%)',
+                      boxShadow: '0 0 8px rgba(212,175,55,0.35)',
                     }}
                   />
                 </div>
@@ -182,8 +184,8 @@ export const FinancePage = () => {
       <div style={{ ...cardStyle, marginBottom: '1.25rem' }}>
         <div className="flex items-center justify-between mb-4">
           <h3
-            className="text-base font-bold text-white"
-            style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+            className="text-base font-bold"
+            style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
           >
             Disbursement History
           </h3>
@@ -200,13 +202,29 @@ export const FinancePage = () => {
       <div style={cardStyle}>
         <div className="flex items-center justify-between mb-4">
           <h3
-            className="text-base font-bold text-white"
-            style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+            className="text-base font-bold"
+            style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
           >
             Sales Detail
           </h3>
-          <button className="btn-ghost text-xs">
-            ↓ Export CSV
+          <button
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150"
+            style={{
+              background: 'linear-gradient(135deg, #c9a227 0%, #d4af37 100%)',
+              color: '#0a1628',
+              boxShadow: '0 2px 8px rgba(212,175,55,0.25)',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 16px rgba(212,175,55,0.40)';
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(212,175,55,0.25)';
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+            }}
+          >
+            <ArrowDownTrayIcon className="w-3.5 h-3.5" />
+            Export CSV
           </button>
         </div>
         <DataTable
