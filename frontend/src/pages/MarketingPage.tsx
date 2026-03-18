@@ -3,14 +3,15 @@ import { Layout } from '../components/layout/Layout';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
 import { MOCK_TITLES } from '../mockData';
-import { SparklesIcon, DocumentTextIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, DocumentTextIcon, MegaphoneIcon, ClipboardDocumentIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 
 const cardStyle: React.CSSProperties = {
-  background: 'linear-gradient(145deg, #1a2d4e 0%, #0f2040 100%)',
+  background: 'linear-gradient(145deg, rgba(26,45,78,0.80) 0%, rgba(15,32,64,0.80) 100%)',
   border: '1px solid rgba(61,96,128,0.22)',
   boxShadow: '0 1px 3px rgba(5,13,26,0.35)',
   borderRadius: '1rem',
   padding: '1.5rem',
+  backdropFilter: 'blur(8px)',
 };
 
 const inputStyle: React.CSSProperties = {
@@ -26,16 +27,26 @@ const inputStyle: React.CSSProperties = {
 };
 
 const mockArcCampaigns = [
-  { id: '1', name: 'Launch Team ARC', expiresAt: '2024-07-15', codesTotal: 50, codesUsed: 37, reviewsReceived: 24, status: 'active' as const },
+  { id: '1', name: 'Launch Team ARC',  expiresAt: '2024-07-15', codesTotal: 50, codesUsed: 37, reviewsReceived: 24, status: 'active'  as const },
   { id: '2', name: 'Blogger Outreach', expiresAt: '2024-06-30', codesTotal: 25, codesUsed: 25, reviewsReceived: 18, status: 'expired' as const },
+];
+
+const pressKitItems = [
+  'Book Summary & Blurb',
+  'Author Bio & Photo',
+  'High-Res Cover Image',
+  'Book Specifications',
+  'Media Contact Sheet',
+  'Review Quotes',
 ];
 
 export const MarketingPage = () => {
   const [selectedTitleId, setSelectedTitleId] = useState(MOCK_TITLES[0].id);
-  const [arcModalOpen, setArcModalOpen] = useState(false);
-  const [synopsis, setSynopsis] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [arcForm, setArcForm] = useState({ name: '', expiresAt: '', codesTotal: '25' });
+  const [arcModalOpen, setArcModalOpen]       = useState(false);
+  const [synopsis, setSynopsis]               = useState('');
+  const [isGenerating, setIsGenerating]       = useState(false);
+  const [arcForm, setArcForm]                 = useState({ name: '', expiresAt: '', codesTotal: '25' });
+  const [selectFocused, setSelectFocused]     = useState(false);
   const toast = useToast();
 
   const selectedTitle = MOCK_TITLES.find(t => t.id === selectedTitleId) || MOCK_TITLES[0];
@@ -61,16 +72,27 @@ export const MarketingPage = () => {
 
   return (
     <Layout title="Marketing Hub" breadcrumbs={[{ label: 'Marketing Hub' }]}>
+
       {/* Title selector */}
       <div className="flex items-center gap-3 mb-6">
-        <label className="text-sm font-medium" style={{ color: 'rgba(138,175,200,0.70)', fontFamily: 'Inter, sans-serif' }}>Title:</label>
+        <label
+          className="text-sm font-medium whitespace-nowrap"
+          style={{ color: 'rgba(138,175,200,0.70)', fontFamily: 'Inter, sans-serif' }}
+        >
+          Active Title:
+        </label>
         <select
           value={selectedTitleId}
           onChange={e => setSelectedTitleId(e.target.value)}
+          onFocus={() => setSelectFocused(true)}
+          onBlur={() => setSelectFocused(false)}
           style={{
             ...inputStyle,
             width: 'auto',
-            minWidth: '12rem',
+            minWidth: '14rem',
+            border: selectFocused ? '1px solid rgba(212,175,55,0.55)' : '1px solid rgba(61,96,128,0.40)',
+            boxShadow: selectFocused ? '0 0 0 3px rgba(201,162,39,0.12)' : 'none',
+            cursor: 'pointer',
           }}
         >
           {MOCK_TITLES.filter(t => t.status !== 'draft').map(t => (
@@ -82,18 +104,28 @@ export const MarketingPage = () => {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-5">
         {/* AI Synopsis Generator */}
         <div style={cardStyle}>
-          <div className="flex items-center gap-2 mb-4">
-            <SparklesIcon className="w-5 h-5" style={{ color: '#d4af37' }} />
-            <h3 className="text-base font-bold text-white" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
+          <div className="flex items-center gap-2.5 mb-4">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.22)' }}
+            >
+              <SparklesIcon className="w-4 h-4" style={{ color: '#d4af37' }} />
+            </div>
+            <h3
+              className="text-base font-bold"
+              style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
+            >
               AI Synopsis Generator
             </h3>
           </div>
+
           {synopsis ? (
             <div
-              className="p-4 rounded-xl mb-4"
+              className="p-4 rounded-xl mb-4 relative"
               style={{
                 background: 'rgba(212,175,55,0.06)',
-                border: '1px solid rgba(212,175,55,0.18)',
+                border: '1px solid rgba(212,175,55,0.22)',
+                boxShadow: '0 0 20px rgba(212,175,55,0.06) inset',
               }}
             >
               <p className="text-sm leading-relaxed" style={{ color: '#c5d8e8', fontFamily: 'Inter, sans-serif' }}>{synopsis}</p>
@@ -103,21 +135,26 @@ export const MarketingPage = () => {
               className="h-28 rounded-xl flex items-center justify-center mb-4"
               style={{
                 background: 'rgba(10,22,40,0.50)',
-                border: '1px dashed rgba(61,96,128,0.35)',
+                border: '1px dashed rgba(61,96,128,0.40)',
               }}
             >
-              <p className="text-sm" style={{ color: 'rgba(90,127,160,0.55)' }}>Generated synopsis will appear here</p>
+              <p className="text-sm" style={{ color: 'rgba(90,127,160,0.55)', fontFamily: 'Inter, sans-serif' }}>
+                Generated synopsis will appear here
+              </p>
             </div>
           )}
+
           <div className="flex gap-3">
             <button
               onClick={handleGenerateSynopsis}
               disabled={isGenerating}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
               style={{
-                background: 'linear-gradient(135deg, #c9a227 0%, #d4af37 100%)',
+                background: isGenerating
+                  ? 'rgba(201,162,39,0.60)'
+                  : 'linear-gradient(135deg, #c9a227 0%, #d4af37 100%)',
                 color: '#0a1628',
-                boxShadow: '0 2px 8px rgba(212,175,55,0.25)',
+                boxShadow: isGenerating ? 'none' : '0 2px 8px rgba(212,175,55,0.30)',
               }}
             >
               <SparklesIcon className="w-4 h-4" />
@@ -126,14 +163,14 @@ export const MarketingPage = () => {
             {synopsis && (
               <button
                 onClick={() => { navigator.clipboard.writeText(synopsis); toast.success('Copied!'); }}
-                className="px-4 py-2.5 rounded-xl text-sm transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm transition-colors"
                 style={{
                   border: '1px solid rgba(61,96,128,0.40)',
                   color: '#8aafc8',
                   background: 'transparent',
                 }}
                 onMouseEnter={e => {
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(212,175,55,0.35)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(212,175,55,0.40)';
                   (e.currentTarget as HTMLButtonElement).style.color = '#d4af37';
                 }}
                 onMouseLeave={e => {
@@ -141,6 +178,7 @@ export const MarketingPage = () => {
                   (e.currentTarget as HTMLButtonElement).style.color = '#8aafc8';
                 }}
               >
+                <ClipboardDocumentIcon className="w-4 h-4" />
                 Copy
               </button>
             )}
@@ -149,9 +187,17 @@ export const MarketingPage = () => {
 
         {/* Press Kit */}
         <div style={cardStyle}>
-          <div className="flex items-center gap-2 mb-4">
-            <DocumentTextIcon className="w-5 h-5" style={{ color: '#c4a882' }} />
-            <h3 className="text-base font-bold text-white" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
+          <div className="flex items-center gap-2.5 mb-4">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(196,168,130,0.12)', border: '1px solid rgba(196,168,130,0.22)' }}
+            >
+              <DocumentTextIcon className="w-4 h-4" style={{ color: '#c4a882' }} />
+            </div>
+            <h3
+              className="text-base font-bold"
+              style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
+            >
               Press Kit Generator
             </h3>
           </div>
@@ -159,19 +205,33 @@ export const MarketingPage = () => {
             Generate a professional press kit including book summary, author bio, high-res cover, book specs, and media contact info.
           </p>
           <div className="space-y-2 mb-4">
-            {['Book Summary & Blurb', 'Author Bio & Photo', 'High-Res Cover Image', 'Book Specifications', 'Media Contact Sheet', 'Review Quotes'].map(item => (
-              <div key={item} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(197,216,232,0.80)' }}>
-                <span style={{ color: '#c4a882' }}>✓</span> {item}
+            {pressKitItems.map(item => (
+              <div key={item} className="flex items-center gap-2.5 text-sm">
+                <span
+                  className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
+                  style={{ background: 'rgba(196,168,130,0.15)', color: '#c4a882', border: '1px solid rgba(196,168,130,0.25)' }}
+                >
+                  ✓
+                </span>
+                <span style={{ color: 'rgba(197,216,232,0.80)', fontFamily: 'Inter, sans-serif' }}>{item}</span>
               </div>
             ))}
           </div>
           <button
             onClick={handlePressKit}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all"
+            className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-150"
             style={{
               background: 'linear-gradient(135deg, #c9a227 0%, #d4af37 100%)',
               color: '#0a1628',
               boxShadow: '0 2px 8px rgba(212,175,55,0.25)',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 16px rgba(212,175,55,0.40)';
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(212,175,55,0.25)';
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
             }}
           >
             ↓ Download Press Kit (PDF)
@@ -181,19 +241,36 @@ export const MarketingPage = () => {
 
       {/* ARC Campaigns */}
       <div style={{ ...cardStyle, marginBottom: '1.25rem' }}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <MegaphoneIcon className="w-5 h-5" style={{ color: '#d4af37' }} />
-            <h3 className="text-base font-bold text-white" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(212,175,55,0.10)', border: '1px solid rgba(212,175,55,0.20)' }}
+            >
+              <MegaphoneIcon className="w-4 h-4" style={{ color: '#d4af37' }} />
+            </div>
+            <h3
+              className="text-base font-bold"
+              style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
+            >
               ARC Campaigns
             </h3>
           </div>
           <button
             onClick={() => setArcModalOpen(true)}
-            className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+            className="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150"
             style={{
               background: 'linear-gradient(135deg, #c9a227 0%, #d4af37 100%)',
               color: '#0a1628',
+              boxShadow: '0 2px 8px rgba(212,175,55,0.25)',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 14px rgba(212,175,55,0.38)';
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(212,175,55,0.25)';
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
             }}
           >
             + New Campaign
@@ -205,12 +282,15 @@ export const MarketingPage = () => {
               key={campaign.id}
               className="rounded-xl p-4"
               style={{
-                background: 'rgba(10,22,40,0.50)',
-                border: '1px solid rgba(61,96,128,0.25)',
+                background: 'rgba(10,22,40,0.55)',
+                border: '1px solid rgba(61,96,128,0.28)',
               }}
             >
               <div className="flex items-center justify-between mb-3">
-                <p className="font-semibold" style={{ color: '#c5d8e8', fontFamily: '"Playfair Display", Georgia, serif' }}>
+                <p
+                  className="font-semibold"
+                  style={{ color: '#c5d8e8', fontFamily: '"Playfair Display", Georgia, serif' }}
+                >
                   {campaign.name}
                 </p>
                 <span
@@ -218,22 +298,22 @@ export const MarketingPage = () => {
                   style={
                     campaign.status === 'active'
                       ? { background: 'rgba(52,211,153,0.10)', color: '#34d399', border: '1px solid rgba(52,211,153,0.22)' }
-                      : { background: 'rgba(61,96,128,0.20)', color: 'rgba(138,175,200,0.60)', border: '1px solid rgba(61,96,128,0.25)' }
+                      : { background: 'rgba(61,96,128,0.20)', color: 'rgba(138,175,200,0.60)', border: '1px solid rgba(61,96,128,0.30)' }
                   }
                 >
                   {campaign.status}
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="grid grid-cols-3 gap-3 text-center mb-3">
                 {[
-                  { val: campaign.codesUsed, lbl: 'Claimed' },
-                  { val: campaign.reviewsReceived, lbl: 'Reviews' },
+                  { val: campaign.codesUsed,       lbl: 'Claimed'    },
+                  { val: campaign.reviewsReceived,  lbl: 'Reviews'    },
                   { val: `${Math.round(campaign.reviewsReceived / campaign.codesUsed * 100)}%`, lbl: 'Conversion' },
                 ].map(stat => (
                   <div
                     key={stat.lbl}
                     className="rounded-lg p-2"
-                    style={{ background: 'rgba(26,45,78,0.60)', border: '1px solid rgba(61,96,128,0.18)' }}
+                    style={{ background: 'rgba(26,45,78,0.70)', border: '1px solid rgba(61,96,128,0.18)' }}
                   >
                     <p
                       className="text-lg font-bold"
@@ -241,23 +321,26 @@ export const MarketingPage = () => {
                     >
                       {stat.val}
                     </p>
-                    <p className="text-xs" style={{ color: 'rgba(90,127,160,0.60)' }}>{stat.lbl}</p>
+                    <p className="text-xs" style={{ color: 'rgba(90,127,160,0.65)' }}>{stat.lbl}</p>
                   </div>
                 ))}
               </div>
-              <div className="mt-3">
+              <div>
                 <div
-                  className="flex items-center justify-between text-xs mb-1"
+                  className="flex items-center justify-between text-xs mb-1.5"
                   style={{ color: 'rgba(90,127,160,0.60)', fontFamily: '"Source Code Pro", monospace' }}
                 >
                   <span>{campaign.codesUsed} / {campaign.codesTotal} codes used</span>
                   <span>Expires: {campaign.expiresAt}</span>
                 </div>
-                <div className="h-1.5 rounded-full" style={{ background: 'rgba(26,45,78,0.80)' }}>
+                <div
+                  className="h-1.5 rounded-full overflow-hidden"
+                  style={{ background: 'rgba(15,32,64,0.90)' }}
+                >
                   <div
-                    className="h-1.5 rounded-full"
+                    className="h-1.5 rounded-full transition-all duration-500"
                     style={{
-                      width: `${campaign.codesUsed / campaign.codesTotal * 100}%`,
+                      width: `${(campaign.codesUsed / campaign.codesTotal) * 100}%`,
                       background: 'linear-gradient(90deg, #c9a227 0%, #d4af37 100%)',
                       boxShadow: '0 0 6px rgba(212,175,55,0.30)',
                     }}
@@ -271,7 +354,10 @@ export const MarketingPage = () => {
 
       {/* Landing Page */}
       <div style={cardStyle}>
-        <h3 className="text-base font-bold text-white mb-3" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
+        <h3
+          className="text-base font-bold mb-2"
+          style={{ fontFamily: '"Playfair Display", Georgia, serif', color: '#e0c060' }}
+        >
           Book Landing Page
         </h3>
         <p className="text-sm mb-4" style={{ color: 'rgba(138,175,200,0.65)', fontFamily: 'Inter, sans-serif' }}>
@@ -280,26 +366,28 @@ export const MarketingPage = () => {
           {' '}is ready to share.
         </p>
         <div
-          className="rounded-xl p-4 font-mono text-xs mb-4"
+          className="rounded-xl px-4 py-3 font-mono text-sm mb-4 flex items-center gap-2"
           style={{
-            background: 'rgba(5,13,26,0.80)',
-            border: '1px solid rgba(61,96,128,0.25)',
-            color: '#d4af37',
+            background: 'rgba(5,13,26,0.85)',
+            border: '1px solid rgba(52,211,153,0.20)',
+            color: '#34d399',
+            boxShadow: '0 0 16px rgba(52,211,153,0.06) inset',
           }}
         >
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#34d399', boxShadow: '0 0 6px rgba(52,211,153,0.50)' }} />
           https://guttenberg.io/book/{selectedTitle.id}
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => toast.info('Opening page preview…')}
-            className="px-4 py-2 rounded-xl text-sm transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm transition-colors"
             style={{
               border: '1px solid rgba(61,96,128,0.40)',
               color: '#8aafc8',
               background: 'transparent',
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(212,175,55,0.35)';
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(212,175,55,0.40)';
               (e.currentTarget as HTMLButtonElement).style.color = '#d4af37';
             }}
             onMouseLeave={e => {
@@ -307,16 +395,25 @@ export const MarketingPage = () => {
               (e.currentTarget as HTMLButtonElement).style.color = '#8aafc8';
             }}
           >
+            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
             Preview
           </button>
           <button
             onClick={() => { navigator.clipboard.writeText(`https://guttenberg.io/book/${selectedTitle.id}`); toast.success('Link copied!'); }}
-            className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150"
             style={{
               background: 'linear-gradient(135deg, #c9a227 0%, #d4af37 100%)',
               color: '#0a1628',
+              boxShadow: '0 2px 8px rgba(212,175,55,0.25)',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 14px rgba(212,175,55,0.38)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(212,175,55,0.25)';
             }}
           >
+            <ClipboardDocumentIcon className="w-4 h-4" />
             Copy Link
           </button>
         </div>
@@ -326,18 +423,24 @@ export const MarketingPage = () => {
       <Modal isOpen={arcModalOpen} onClose={() => setArcModalOpen(false)} title="New ARC Campaign">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'rgba(197,216,232,0.80)', fontFamily: 'Inter, sans-serif' }}>
+            <label
+              className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+              style={{ color: 'rgba(138,175,200,0.70)', fontFamily: 'Inter, sans-serif', letterSpacing: '0.06em' }}
+            >
               Campaign Name
             </label>
             <input
               value={arcForm.name}
               onChange={e => setArcForm(f => ({ ...f, name: e.target.value }))}
               placeholder="e.g. Launch Team ARC"
-              style={{ ...inputStyle }}
+              style={inputStyle}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'rgba(197,216,232,0.80)', fontFamily: 'Inter, sans-serif' }}>
+            <label
+              className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+              style={{ color: 'rgba(138,175,200,0.70)', fontFamily: 'Inter, sans-serif', letterSpacing: '0.06em' }}
+            >
               Number of Review Copies
             </label>
             <input
@@ -346,18 +449,21 @@ export const MarketingPage = () => {
               onChange={e => setArcForm(f => ({ ...f, codesTotal: e.target.value }))}
               min="1"
               max="500"
-              style={{ ...inputStyle }}
+              style={inputStyle}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'rgba(197,216,232,0.80)', fontFamily: 'Inter, sans-serif' }}>
+            <label
+              className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+              style={{ color: 'rgba(138,175,200,0.70)', fontFamily: 'Inter, sans-serif', letterSpacing: '0.06em' }}
+            >
               Expiry Date
             </label>
             <input
               type="date"
               value={arcForm.expiresAt}
               onChange={e => setArcForm(f => ({ ...f, expiresAt: e.target.value }))}
-              style={{ ...inputStyle }}
+              style={{ ...inputStyle, colorScheme: 'dark' }}
             />
           </div>
           <div className="flex gap-3 pt-2">
@@ -369,15 +475,24 @@ export const MarketingPage = () => {
                 color: '#8aafc8',
                 background: 'transparent',
               }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(61,96,128,0.60)';
+                (e.currentTarget as HTMLButtonElement).style.color = '#c5d8e8';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(61,96,128,0.40)';
+                (e.currentTarget as HTMLButtonElement).style.color = '#8aafc8';
+              }}
             >
               Cancel
             </button>
             <button
               onClick={handleCreateArc}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150"
               style={{
                 background: 'linear-gradient(135deg, #c9a227 0%, #d4af37 100%)',
                 color: '#0a1628',
+                boxShadow: '0 2px 8px rgba(212,175,55,0.25)',
               }}
             >
               Create Campaign
