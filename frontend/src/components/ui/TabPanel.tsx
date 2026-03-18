@@ -1,5 +1,4 @@
 import React from 'react';
-import clsx from 'clsx';
 
 interface Tab {
   id: string;
@@ -16,25 +15,55 @@ interface TabPanelProps {
 
 export const TabPanel = ({ tabs, activeTab, onTabChange, children }: TabPanelProps) => (
   <div>
-    <div className="border-b border-gray-200">
-      <nav className="-mb-px flex gap-1 px-1">
-        {tabs.map(tab => (
+    {/* Tab bar */}
+    <div
+      className="flex gap-0.5 p-1 rounded-xl w-fit"
+      style={{
+        background: 'rgba(10,22,40,0.60)',
+        border: '1px solid rgba(61,96,128,0.22)',
+      }}
+      role="tablist"
+    >
+      {tabs.map(tab => {
+        const isActive = activeTab === tab.id;
+        return (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={isActive}
             onClick={() => onTabChange(tab.id)}
-            className={clsx(
-              'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
-              activeTab === tab.id
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            )}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 whitespace-nowrap"
+            style={{
+              background: isActive
+                ? 'linear-gradient(135deg, #1a2d4e 0%, #243b55 100%)'
+                : 'transparent',
+              border: isActive
+                ? '1px solid rgba(212,175,55,0.25)'
+                : '1px solid transparent',
+              color: isActive ? '#d4af37' : 'rgba(138,175,200,0.65)',
+              boxShadow: isActive ? '0 2px 8px rgba(5,13,26,0.30)' : 'none',
+              fontFamily: 'Inter, sans-serif',
+            }}
+            onMouseEnter={e => {
+              if (!isActive) {
+                (e.currentTarget as HTMLButtonElement).style.color = '#c5d8e8';
+                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(61,96,128,0.12)';
+              }
+            }}
+            onMouseLeave={e => {
+              if (!isActive) {
+                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(138,175,200,0.65)';
+                (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+              }
+            }}
           >
-            {tab.icon}
+            {tab.icon && <span className="w-4 h-4 flex-shrink-0">{tab.icon}</span>}
             {tab.label}
           </button>
-        ))}
-      </nav>
+        );
+      })}
     </div>
-    <div className="mt-4">{children}</div>
+
+    <div className="mt-5">{children}</div>
   </div>
 );

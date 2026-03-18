@@ -20,14 +20,23 @@
   --navy-50:  #e8f1f8;
 
   /* Gold */
+  --gold-950: #3d2600;
+  --gold-900: #6b4200;
+  --gold-800: #8b5a00;
+  --gold-700: #a37000;
   --gold-600: #c9a227;
   --gold-500: #d4af37;
   --gold-400: #e0c060;
   --gold-300: #eacf7a;
   --gold-200: #f0de9a;
   --gold-100: #f8f0d0;
+  --gold-50:  #fdf8ee;
 
   /* Tan */
+  --tan-900: #6b5040;
+  --tan-800: #8b6548;
+  --tan-700: #a08060;
+  --tan-600: #b89470;
   --tan-500: #c4a882;
   --tan-400: #d4b896;
   --tan-300: #e0ccac;
@@ -143,6 +152,9 @@ h1, h2, h3, h4, h5, h6 {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%230a1628'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%230d1b2e' opacity='0.4'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%230d1b2e' opacity='0.4'/%3E%3C/svg%3E");
 }
 
+.texture-noise {
+  position: relative;
+}
 .texture-noise::after {
   content: '';
   position: absolute;
@@ -188,7 +200,7 @@ h1, h2, h3, h4, h5, h6 {
   }
   .btn-gold:hover {
     background-position: right center;
-    box-shadow: 0 4px 16px rgba(201,162,39,0.40), inset 0 1px 0 rgba(255,255,255,0.20);
+    box-shadow: 0 4px 16px rgba(201,162,39,0.45), inset 0 1px 0 rgba(255,255,255,0.20);
     transform: translateY(-1px);
   }
   .btn-gold:active {
@@ -396,12 +408,38 @@ h1, h2, h3, h4, h5, h6 {
   50%       { transform: translateY(-6px); }
 }
 
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Animate utilities ──────────────────────────────────────────────────────── */
+.animate-fade-in      { animation: fadeIn 0.35s ease-out both; }
+.animate-slide-up     { animation: slideUp 0.45s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-slide-in-left{ animation: slideInLeft 0.3s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-shimmer      { animation: shimmer 2s infinite linear; }
+.animate-pulse-gold   { animation: pulseGold 2.5s ease-in-out infinite; }
+.animate-glow-pulse   { animation: glowPulse 3s ease-in-out infinite; }
+.animate-float        { animation: float 4s ease-in-out infinite; }
+.animate-gradient     { animation: gradientShift 6s ease infinite; background-size: 200% 200%; }
+
 /* ── Recharts overrides ─────────────────────────────────────────────────────── */
 .recharts-tooltip-wrapper .recharts-default-tooltip {
   border-radius: 12px !important;
   border: 1px solid rgba(61,96,128,0.35) !important;
   box-shadow: 0 8px 32px rgba(5,13,26,0.50) !important;
   background: #1a2d4e !important;
+}
+
+/* ── Gold Glow Box Shadow helper ─────────────────────────────────────────────── */
+.shadow-glow-gold {
+  box-shadow: 0 0 16px rgba(212,175,55,0.35), 0 4px 12px rgba(5,13,26,0.40);
 }
 
 /* ── Print Styles ───────────────────────────────────────────────────────────── */

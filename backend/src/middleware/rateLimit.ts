@@ -22,7 +22,7 @@ interface Bucket {
 // Map keyed by "<windowMs>:<limit>:<ip>" so different limiters don't collide.
 const store = new Map<string, Bucket>();
 
-/** Purge buckets older than 2× the window to prevent unbounded memory growth. */
+/** Purge buckets whose most-recent timestamp is older than 2× the given window. */
 function pruneStore(windowMs: number): void {
   const cutoff = Date.now() - windowMs * 2;
   for (const [key, bucket] of store.entries()) {
@@ -34,8 +34,6 @@ function pruneStore(windowMs: number): void {
 
 // Prune every 5 minutes regardless of traffic.
 setInterval(() => {
-  // We don't know each bucket's windowMs here, so prune entries with all
-  // timestamps > 10 minutes old – a safe universal TTL.
   const cutoff = Date.now() - 10 * 60 * 1000;
   for (const [key, bucket] of store.entries()) {
     if (!bucket.timestamps.some((t) => t > cutoff)) store.delete(key);
@@ -50,7 +48,7 @@ setInterval(() => {
  * Rate-limit headers are always set:
  *   X-RateLimit-Limit     – configured max requests per window
  *   X-RateLimit-Remaining – requests left in the current window
- *   X-RateLimit-Reset     – Unix timestamp (seconds) when the window resets
+ *   X-RateLimit-Reset     – Unix timestamp (seconds) when the oldest request ages out
  *
  * On breach, responds 429 with error code GUT-4290.
  */
@@ -58,7 +56,7 @@ export function rateLimit(options: RateLimitOptions) {
   const { limit, windowMs, label = 'this endpoint' } = options;
   const namespacePrefix = `${windowMs}:${limit}`;
 
-  // Stagger pruning so all limiters don't fire at the same time.
+  // Stagger pruning so all limiters don't fire simultaneously.
   const pruneInterval = setInterval(() => pruneStore(windowMs), windowMs);
   pruneInterval.unref();
 
@@ -69,26 +67,27 @@ export function rateLimit(options: RateLimitOptions) {
 
     const key    = `${namespacePrefix}:${ip}`;
     const now    = Date.now();
-    const window = now - windowMs;
+    const cutoff = now - windowMs;
 
     if (!store.has(key)) store.set(key, { timestamps: [] });
 
     const bucket = store.get(key)!;
 
     // Remove timestamps outside the sliding window
-    bucket.timestamps = bucket.timestamps.filter((t) => t > window);
+    bucket.timestamps = bucket.timestamps.filter((t) => t > cutoff);
 
-    const remaining = Math.max(0, limit - bucket.timestamps.length);
-    // Reset = when the oldest in-window request ages out
+    const count     = bucket.timestamps.length;
+    const remaining = Math.max(0, limit - count - 1);
+    // Reset = when the oldest in-window request will age out
     const oldestInWindow = bucket.timestamps[0] ?? now;
     const resetMs        = oldestInWindow + windowMs;
 
     res.setHeader('X-RateLimit-Limit',     String(limit));
-    res.setHeader('X-RateLimit-Remaining', String(Math.max(0, remaining - 1)));
+    res.setHeader('X-RateLimit-Remaining', String(remaining));
     res.setHeader('X-RateLimit-Reset',     String(Math.ceil(resetMs / 1000)));
 
-    if (bucket.timestamps.length >= limit) {
-      const retryAfterSec = Math.ceil((resetMs - now) / 1000);
+    if (count >= limit) {
+      const retryAfterSec = Math.max(1, Math.ceil((resetMs - now) / 1000));
       res.setHeader('Retry-After', String(retryAfterSec));
       res.status(429).json({
         success: false,
@@ -108,7 +107,7 @@ export function rateLimit(options: RateLimitOptions) {
   };
 }
 
-// ─── Pre-configured limiters ──────────────────────────────────────────────────
+// ─── Pre-configured limiters ─────────────────────────────────────────────────
 
 /** Strict limit for authentication endpoints: 5 requests per 15 minutes. */
 export const authRateLimit = rateLimit({

@@ -10,7 +10,7 @@ export interface AuthUser {
 }
 
 export interface AuthenticatedRequest extends Request {
-  user?: AuthUser;
+  user?:      AuthUser;
   requestId?: string;
 }
 
@@ -60,6 +60,57 @@ function errorResponse(code: string, message: string, detail: string) {
   };
 }
 
+/**
+ * Parse and validate a raw Bearer token from the Authorization header.
+ * Returns the decoded AuthUser on success, or a 401 response payload describing
+ * the failure.
+ */
+function parseBearer(
+  authHeader: string | undefined
+): { user: AuthUser } | { status: number; body: ReturnType<typeof errorResponse> } {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { status: 401, body: errorResponse('GUT-4010', 'Authentication required', 'No Bearer token found in Authorization header.') };
+  }
+
+  const token = authHeader.slice(7).trim();
+
+  if (token.length > TOKEN_MAX_LENGTH) {
+    return { status: 401, body: errorResponse('GUT-4012', 'Invalid token', 'Token exceeds maximum allowed length.') };
+  }
+
+  if (!VALID_TOKEN_RE.test(token)) {
+    return { status: 401, body: errorResponse('GUT-4012', 'Invalid token', 'Token contains invalid characters.') };
+  }
+
+  const payload = decodePayload(token);
+  if (!payload) {
+    return { status: 401, body: errorResponse('GUT-4012', 'Invalid token', 'The provided token could not be decoded.') };
+  }
+
+  if (typeof payload.exp === 'number' && payload.exp < Math.floor(Date.now() / 1000)) {
+    return {
+      status: 401,
+      body: {
+        success: false,
+        error: {
+          code:       'GUT-4011',
+          message:    'Token expired',
+          detail:     'The provided token has expired.',
+          resolution: 'Re-authenticate via POST /api/auth/login to obtain a new token.',
+          docs_url:   'https://docs.guttenberg.io/errors/GUT-4011',
+        },
+      },
+    };
+  }
+
+  const user = sanitiseUser(payload);
+  if (!user) {
+    return { status: 401, body: errorResponse('GUT-4012', 'Invalid token', 'Token payload is missing required fields.') };
+  }
+
+  return { user };
+}
+
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
 /**
@@ -71,73 +122,14 @@ export function authMiddleware(
   res: Response,
   next: NextFunction
 ): void {
-  const authHeader = req.headers.authorization;
+  const result = parseBearer(req.headers.authorization);
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json(errorResponse(
-      'GUT-4010',
-      'Authentication required',
-      'No Bearer token found in Authorization header.'
-    ));
-    return;
+  if ('user' in result) {
+    req.user = result.user;
+    next();
+  } else {
+    res.status(result.status).json(result.body);
   }
-
-  const token = authHeader.slice(7).trim();
-
-  if (token.length > TOKEN_MAX_LENGTH) {
-    res.status(401).json(errorResponse(
-      'GUT-4012',
-      'Invalid token',
-      'Token exceeds maximum allowed length.'
-    ));
-    return;
-  }
-
-  if (!VALID_TOKEN_RE.test(token)) {
-    res.status(401).json(errorResponse(
-      'GUT-4012',
-      'Invalid token',
-      'Token contains invalid characters.'
-    ));
-    return;
-  }
-
-  const payload = decodePayload(token);
-  if (!payload) {
-    res.status(401).json(errorResponse(
-      'GUT-4012',
-      'Invalid token',
-      'The provided token could not be decoded.'
-    ));
-    return;
-  }
-
-  if (typeof payload.exp === 'number' && payload.exp < Math.floor(Date.now() / 1000)) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code:       'GUT-4011',
-        message:    'Token expired',
-        detail:     'The provided token has expired.',
-        resolution: 'Re-authenticate via POST /api/auth/login to obtain a new token.',
-        docs_url:   'https://docs.guttenberg.io/errors/GUT-4011',
-      },
-    });
-    return;
-  }
-
-  const user = sanitiseUser(payload);
-  if (!user) {
-    res.status(401).json(errorResponse(
-      'GUT-4012',
-      'Invalid token',
-      'Token payload is missing required fields.'
-    ));
-    return;
-  }
-
-  req.user = user;
-  next();
 }
 
 /**
